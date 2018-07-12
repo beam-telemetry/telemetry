@@ -20,15 +20,14 @@ defmodule Events do
   called with three arguments:
   * the exact event name (see `emit/2`)
   * the event value (see `emit/2`)
-  * the subscription configuration, `config`, or an empty map if one wasn't provided
+  * the subscription configuration, `config`, or `nil` if one wasn't provided
 
   If the function fails (raises, exits or throws) then the subscription is removed.
   """
   @spec subscribe(subscription_id, event_prefix, module, function :: atom) :: :ok | :error
-  @spec subscribe(subscription_id, event_prefix, module, function :: atom, config :: map) ::
+  @spec subscribe(subscription_id, event_prefix, module, function :: atom, config :: term) ::
           :ok | :error
-  def subscribe(sub_id, event_prefix, module, function, config \\ %{}) do
-  end
+  defdelegate subscribe(sub_id, event_prefix, module, function, config \\ nil), to: Events.Impl
 
   @doc """
   Removes existing subscription.
@@ -36,8 +35,7 @@ defmodule Events do
   If the subscription doesn't exist, `:error` is returned.
   """
   @spec unsubscribe(subscription_id) :: :ok | :error
-  def unsubscribe(sub_id) do
-  end
+  defdelegate unsubscribe(sub_id), to: Events.Impl
 
   @doc """
   Emits an event with given name and value.
@@ -47,6 +45,17 @@ defmodule Events do
   """
   @spec emit(event_name, value :: term()) :: :ok
   def emit(event_name, value) do
+    subscribed = Events.Impl.list_subscribed_to(event_name)
+
+    for {sub_id, _, module, function, config} <- subscribed do
+      try do
+        apply(module, function, [event_name, value, config])
+      catch
+        _, _ ->
+          # it might happen that other processes will call it before it's unsubscribed
+          unsubscribe(sub_id)
+      end
+    end
   end
 
   @doc """
@@ -56,6 +65,5 @@ defmodule Events do
   """
   @spec list_subscriptions(event_prefix) ::
           {subscription_id, event_prefix, module, function :: atom, config :: map}
-  def list_subscriptions(event_prefix) do
-  end
+  defdelegate list_subscriptions(event_prefix), to: Events.Impl
 end

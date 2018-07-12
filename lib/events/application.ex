@@ -4,7 +4,9 @@ defmodule Events.Application do
   use Application
 
   def start(_type, _args) do
-    children = []
+    children = [
+      Events.Impl
+    ]
 
     opts = [strategy: :one_for_one, name: Events.Supervisor]
     Supervisor.start_link(children, opts)
