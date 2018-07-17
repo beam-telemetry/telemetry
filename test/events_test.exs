@@ -47,51 +47,14 @@ defmodule EventsTest do
     sub_id: sub_id
   } do
     event = [:a, :test]
-    prefix = event ++ [:prefix]
+    prefix = [:a, :test, :prefix]
     config = %{send_to: self()}
     value = 1
     Events.subscribe(sub_id, prefix, TestSubscriber, :echo_event, config)
 
     Events.emit(event, value)
 
-    assert {:messages, []} == Process.info(self(), :messages)
-  end
-
-  test "mf is unsubsribed when it fails", %{sub_id: sub_id} do
-    event = [:a, :test, :event]
-    Events.subscribe(sub_id, event, TestSubscriber, :raise_on_event)
-
-    Events.emit(event, 1)
-
-    assert [] == Events.list_subscriptions(event)
-  end
-
-  test "unsubcribed mf is not called when event is emitted", %{sub_id: sub_id} do
-    event = [:a, :test, :event]
-    Events.subscribe(sub_id, event, TestSubscriber, :echo_event, %{send_to: self()})
-
-    Events.unsubscribe(sub_id)
-    Events.emit(event, 1)
-
-    assert {:messages, []} == Process.info(self(), :messages)
-  end
-
-  test "unsubscribing returns error if subscription doesn't exist", %{
-    sub_id: sub_id
-  } do
-    assert {:error, :not_found} = Events.unsubscribe(sub_id)
-  end
-
-  test "mf subscribed to event prefix is called when event is emitted", %{sub_id: sub_id} do
-    prefix = [:a, :test]
-    event = prefix ++ [:event]
-    config = %{send_to: self()}
-    value = 1
-    Events.subscribe(sub_id, prefix, TestSubscriber, :echo_event, config)
-
-    Events.emit(event, value)
-
-    assert_receive {:event, ^event, ^value, ^config}
+    refute_receive {:event, ^event, ^value, ^config}
   end
 
   test "subscriptions to event can be listed", %{sub_id: sub_id} do
@@ -105,9 +68,9 @@ defmodule EventsTest do
 
   test "subscriptions to event prefix can be listed", %{sub_id: sub_id} do
     prefix1 = []
-    prefix2 = prefix1 ++ [:a]
-    prefix3 = prefix2 ++ [:test]
-    event = prefix3 ++ [:event]
+    prefix2 = [:a]
+    prefix3 = [:a, :test]
+    event = [:a, :test, :event]
     config = %{send_to: self()}
     Events.subscribe(sub_id, event, TestSubscriber, :echo_event, config)
 
@@ -117,5 +80,44 @@ defmodule EventsTest do
     end
 
     assert [] == Events.list_subscriptions(event ++ [:something])
+  end
+
+  test "mf is unsubsribed when it fails", %{sub_id: sub_id} do
+    event = [:a, :test, :event]
+    Events.subscribe(sub_id, event, TestSubscriber, :raise_on_event)
+
+    Events.emit(event, 1)
+
+    assert [] == Events.list_subscriptions(event)
+  end
+
+  test "unsubcribed mf is not called when event is emitted", %{sub_id: sub_id} do
+    event = [:a, :test, :event]
+    config = %{send_to: self()}
+    value = 1
+    Events.subscribe(sub_id, event, TestSubscriber, :echo_event, config)
+
+    Events.unsubscribe(sub_id)
+    Events.emit(event, value)
+
+    refute_receive {:event, ^event, ^value, ^config}
+  end
+
+  test "unsubscribing returns error if subscription doesn't exist", %{
+    sub_id: sub_id
+  } do
+    assert {:error, :not_found} = Events.unsubscribe(sub_id)
+  end
+
+  test "mf subscribed to event prefix is called when event is emitted", %{sub_id: sub_id} do
+    prefix = [:a, :test]
+    event = [:a, :test, :event]
+    config = %{send_to: self()}
+    value = 1
+    Events.subscribe(sub_id, prefix, TestSubscriber, :echo_event, config)
+
+    Events.emit(event, value)
+
+    assert_receive {:event, ^event, ^value, ^config}
   end
 end
