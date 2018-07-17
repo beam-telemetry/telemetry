@@ -16,7 +16,7 @@ defmodule Events.Impl.Agent do
   def subscribe(sub_id, prefix, module, function, config) do
     Agent.get_and_update(__MODULE__, fn subs ->
       if Map.has_key?(subs, sub_id) do
-        {:error, subs}
+        {{:error, :already_exists}, subs}
       else
         {:ok, Map.put(subs, sub_id, {sub_id, prefix, module, function, config})}
       end
@@ -29,7 +29,7 @@ defmodule Events.Impl.Agent do
       if Map.has_key?(subs, sub_id) do
         {:ok, Map.delete(subs, sub_id)}
       else
-        {:error, subs}
+        {{:error, :not_found}, subs}
       end
     end)
   end

@@ -16,7 +16,7 @@ defmodule Events do
   Creates a subscription to an event.
 
   `subscription_id` must be unique, if another subscription with the same ID already exists the
-  `:error` atom is be returned.
+  `{:error, :already_exists}` atom is be returned.
 
   When events with `event_prefix` are emitted, function `function` in module `module` will be
   called with three arguments:
@@ -26,17 +26,18 @@ defmodule Events do
 
   If the function fails (raises, exits or throws) then the subscription is removed.
   """
-  @spec subscribe(subscription_id, event_prefix, module, function :: atom) :: :ok | :error
+  @spec subscribe(subscription_id, event_prefix, module, function :: atom) ::
+          :ok | {:error, :already_exists}
   @spec subscribe(subscription_id, event_prefix, module, function :: atom, config :: term) ::
-          :ok | :error
+          :ok | {:error, :already_exists}
   defdelegate subscribe(sub_id, event_prefix, module, function, config \\ nil), to: @callback_mod
 
   @doc """
   Removes existing subscription.
 
-  If the subscription doesn't exist, `:error` is returned.
+  If the subscription doesn't exist, `{:error, :not_found}` is returned.
   """
-  @spec unsubscribe(subscription_id) :: :ok | :error
+  @spec unsubscribe(subscription_id) :: :ok | {:error, :not_found}
   defdelegate unsubscribe(sub_id), to: @callback_mod
 
   @doc """

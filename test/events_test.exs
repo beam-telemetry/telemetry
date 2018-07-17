@@ -26,7 +26,8 @@ defmodule EventsTest do
   } do
     :ok = Events.subscribe(sub_id, [:some, :event], TestSubscriber, :echo_event)
 
-    assert :error = Events.subscribe(sub_id, [:some, :event], TestSubscriber, :echo_event)
+    assert {:error, :already_exists} =
+             Events.subscribe(sub_id, [:some, :event], TestSubscriber, :echo_event)
   end
 
   test "subscribed mf is called when event exactly matches the subscription prefix", %{
@@ -78,7 +79,7 @@ defmodule EventsTest do
   test "unsubscribing returns error if subscription doesn't exist", %{
     sub_id: sub_id
   } do
-    assert :error = Events.unsubscribe(sub_id)
+    assert {:error, :not_found} = Events.unsubscribe(sub_id)
   end
 
   test "mf subscribed to event prefix is called when event is emitted", %{sub_id: sub_id} do
