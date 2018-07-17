@@ -5,7 +5,7 @@ defmodule Events.Application do
 
   def start(_type, _args) do
     children = [
-      Events.Impl
+      Events
     ]
 
     opts = [strategy: :one_for_one, name: Events.Supervisor]
