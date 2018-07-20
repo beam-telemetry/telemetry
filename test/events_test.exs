@@ -1,7 +1,7 @@
 defmodule EventsTest do
   use ExUnit.Case
 
-  defmodule TestSubscriber do
+  defmodule TestHandler do
     def echo_event(event, value, %{send_to: pid} = config) do
       send(pid, {:event, event, value, config})
     end
@@ -12,111 +12,112 @@ defmodule EventsTest do
   end
 
   setup do
-    subscription_id = :crypto.strong_rand_bytes(16) |> Base.encode16()
+    handler_id = :crypto.strong_rand_bytes(16) |> Base.encode16()
 
     on_exit fn ->
-      Events.unsubscribe(subscription_id)
+      Events.detach(handler_id)
     end
 
-    {:ok, sub_id: subscription_id}
+    {:ok, handler_id: handler_id}
   end
 
-  test "subscribing returns error if subscription with the same ID already exist", %{
-    sub_id: sub_id
+  test "attaching returns error if handler with the same ID already exist", %{
+    handler_id: handler_id
   } do
-    :ok = Events.subscribe(sub_id, [:some, :event], TestSubscriber, :echo_event)
+    :ok = Events.attach(handler_id, [:some, :event], TestHandler, :echo_event)
 
     assert {:error, :already_exists} =
-             Events.subscribe(sub_id, [:some, :event], TestSubscriber, :echo_event)
+             Events.attach(handler_id, [:some, :event], TestHandler, :echo_event)
   end
 
-  test "subscribed mf is called when event exactly matches the subscription prefix", %{
-    sub_id: sub_id
+  test "attached mf is called when event exactly matches the prefix", %{
+    handler_id: handler_id
   } do
     event = [:a, :test, :event]
     config = %{send_to: self()}
     value = 1
-    Events.subscribe(sub_id, event, TestSubscriber, :echo_event, config)
+    Events.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    Events.emit(event, value)
+    Events.execute(event, value)
 
     assert_receive {:event, ^event, ^value, ^config}
   end
 
-  test "subscribed mf is not called when event is a prefix of the subscription prefix", %{
-    sub_id: sub_id
+  test "attached mf is not called when event is a prefix of the prefix handler is attached to", %{
+    handler_id: handler_id
   } do
     event = [:a, :test]
     prefix = [:a, :test, :prefix]
     config = %{send_to: self()}
     value = 1
-    Events.subscribe(sub_id, prefix, TestSubscriber, :echo_event, config)
+    Events.attach(handler_id, prefix, TestHandler, :echo_event, config)
 
-    Events.emit(event, value)
+    Events.execute(event, value)
 
     refute_receive {:event, ^event, ^value, ^config}
   end
 
-  test "subscriptions to event can be listed", %{sub_id: sub_id} do
+  test "handlers attached to event can be listed", %{handler_id: handler_id} do
     event = [:a, :test, :event]
     config = %{send_to: self()}
-    Events.subscribe(sub_id, event, TestSubscriber, :echo_event, config)
+    Events.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    assert [{sub_id, event, TestSubscriber, :echo_event, config}] ==
-             Events.list_subscriptions(event)
+    assert [{handler_id, event, TestHandler, :echo_event, config}] == Events.list_handlers(event)
   end
 
-  test "subscriptions to event prefix can be listed", %{sub_id: sub_id} do
+  test "handlers attached to event prefix can be listed", %{handler_id: handler_id} do
     prefix1 = []
     prefix2 = [:a]
     prefix3 = [:a, :test]
     event = [:a, :test, :event]
     config = %{send_to: self()}
-    Events.subscribe(sub_id, event, TestSubscriber, :echo_event, config)
+    Events.attach(handler_id, event, TestHandler, :echo_event, config)
 
     for prefix <- [prefix1, prefix2, prefix3] do
-      assert [{sub_id, event, TestSubscriber, :echo_event, config}] ==
-               Events.list_subscriptions(prefix)
+      assert [{handler_id, event, TestHandler, :echo_event, config}] ==
+               Events.list_handlers(prefix)
     end
 
-    assert [] == Events.list_subscriptions(event ++ [:something])
+    assert [] == Events.list_handlers(event ++ [:something])
   end
 
-  test "mf is unsubsribed when it fails", %{sub_id: sub_id} do
+  test "mf is detached when it fails", %{handler_id: handler_id} do
     event = [:a, :test, :event]
-    Events.subscribe(sub_id, event, TestSubscriber, :raise_on_event)
+    Events.attach(handler_id, event, TestHandler, :raise_on_event)
 
-    Events.emit(event, 1)
+    Events.execute(event, 1)
 
-    assert [] == Events.list_subscriptions(event)
+    assert [] == Events.list_handlers(event)
   end
 
-  test "unsubcribed mf is not called when event is emitted", %{sub_id: sub_id} do
+  test "detached mf is not called when handlers are executed", %{handler_id: handler_id} do
     event = [:a, :test, :event]
     config = %{send_to: self()}
     value = 1
-    Events.subscribe(sub_id, event, TestSubscriber, :echo_event, config)
+    Events.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    Events.unsubscribe(sub_id)
-    Events.emit(event, value)
+    Events.detach(handler_id)
+    Events.execute(event, value)
 
     refute_receive {:event, ^event, ^value, ^config}
   end
 
-  test "unsubscribing returns error if subscription doesn't exist", %{
-    sub_id: sub_id
+  test "detaching returns error if handler with given ID doesn't exist", %{
+    handler_id: handler_id
   } do
-    assert {:error, :not_found} = Events.unsubscribe(sub_id)
+    assert {:error, :not_found} = Events.detach(handler_id)
   end
 
-  test "mf subscribed to event prefix is called when event is emitted", %{sub_id: sub_id} do
+  test "mf attached to event prefix is called when handlers are executed", %{
+    handler_id: handler_id
+  } do
     prefix = [:a, :test]
     event = [:a, :test, :event]
     config = %{send_to: self()}
     value = 1
-    Events.subscribe(sub_id, prefix, TestSubscriber, :echo_event, config)
+    Events.attach(handler_id, prefix, TestHandler, :echo_event, config)
 
-    Events.emit(event, value)
+    Events.execute(event, value)
 
     assert_receive {:event, ^event, ^value, ^config}
   end

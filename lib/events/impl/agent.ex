@@ -13,43 +13,43 @@ defmodule Events.Impl.Agent do
   end
 
   @impl true
-  def subscribe(sub_id, prefix, module, function, config) do
-    Agent.get_and_update(__MODULE__, fn subs ->
-      if Map.has_key?(subs, sub_id) do
-        {{:error, :already_exists}, subs}
+  def attach(handler_id, prefix, module, function, config) do
+    Agent.get_and_update(__MODULE__, fn handlers ->
+      if Map.has_key?(handlers, handler_id) do
+        {{:error, :already_exists}, handlers}
       else
-        {:ok, Map.put(subs, sub_id, {sub_id, prefix, module, function, config})}
+        {:ok, Map.put(handlers, handler_id, {handler_id, prefix, module, function, config})}
       end
     end)
   end
 
   @impl true
-  def unsubscribe(sub_id) do
-    Agent.get_and_update(__MODULE__, fn subs ->
-      if Map.has_key?(subs, sub_id) do
-        {:ok, Map.delete(subs, sub_id)}
+  def detach(handler_id) do
+    Agent.get_and_update(__MODULE__, fn handlers ->
+      if Map.has_key?(handlers, handler_id) do
+        {:ok, Map.delete(handlers, handler_id)}
       else
-        {{:error, :not_found}, subs}
+        {{:error, :not_found}, handlers}
       end
     end)
   end
 
   @impl true
-  def list_subscribed_to(event) do
-    subs = Agent.get(__MODULE__, fn subs -> Map.values(subs) end)
+  def list_attached_to(event) do
+    handlers = Agent.get(__MODULE__, fn handlers -> Map.values(handlers) end)
 
-    Enum.filter(subs, fn {_, prefix, _, _, _} ->
+    Enum.filter(handlers, fn {_, prefix, _, _, _} ->
       Enum.take(event, length(prefix)) == prefix
     end)
   end
 
   @impl true
-  def list_subscriptions(prefix) do
-    subs = Agent.get(__MODULE__, fn subs -> Map.values(subs) end)
+  def list_handlers(prefix) do
+    handlers = Agent.get(__MODULE__, fn handlers -> Map.values(handlers) end)
 
     prefix_len = length(prefix)
 
-    Enum.filter(subs, fn {_, sub_prefix, _, _, _} ->
+    Enum.filter(handlers, fn {_, sub_prefix, _, _, _} ->
       Enum.take(sub_prefix, prefix_len) == prefix
     end)
   end
