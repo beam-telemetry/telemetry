@@ -8,9 +8,9 @@ defmodule Events do
   @callback_mod Application.fetch_env!(:events, :impl)
 
   @type handler_id :: term()
-  @type event_name :: list()
+  @type event_name :: [atom()]
   @type event_value :: number()
-  @type event_prefix :: list()
+  @type event_prefix :: [atom()]
 
   @doc """
   Attaches a handler to the event prefix.
@@ -30,7 +30,10 @@ defmodule Events do
           :ok | {:error, :already_exists}
   @spec attach(handler_id, event_prefix, module, function :: atom, config :: term) ::
           :ok | {:error, :already_exists}
-  defdelegate attach(handler_id, event_prefix, module, function, config \\ nil), to: @callback_mod
+  def attach(handler_id, event_prefix, module, function, config \\ nil) do
+    assert_event_name_or_prefix(event_prefix)
+    @callback_mod.attach(handler_id, event_prefix, module, function, config)
+  end
 
   @doc """
   Removes existing handler.
@@ -47,6 +50,8 @@ defmodule Events do
   """
   @spec execute(event_name, event_value) :: :ok
   def execute(event_name, value) when is_number(value) do
+    assert_event_name_or_prefix(event_name)
+
     handlers = @callback_mod.list_attached_to(event_name)
 
     for {handler_id, _, module, function, config} <- handlers do
@@ -67,8 +72,25 @@ defmodule Events do
   """
   @spec list_handlers(event_prefix) ::
           {handler_id, event_prefix, module, function :: atom, config :: map}
-  defdelegate list_handlers(event_prefix), to: @callback_mod
+  def list_handlers(event_prefix) do
+    assert_event_name_or_prefix(event_prefix)
+
+    @callback_mod.list_handlers(event_prefix)
+  end
 
   @doc false
   defdelegate child_spec(term), to: @callback_mod
+
+  @spec assert_event_name_or_prefix(term()) :: :ok | no_return
+  defp assert_event_name_or_prefix(list) when is_list(list) do
+    if Enum.all?(list, &is_atom/1) do
+      :ok
+    else
+      raise ArgumentError, "Expected event name or prefix to be a list of atoms"
+    end
+  end
+
+  defp assert_event_name_or_prefix(_) do
+    raise ArgumentError, "Expected event name or prefix to be a list of atoms"
+  end
 end
