@@ -9,6 +9,7 @@ defmodule Events do
 
   @type handler_id :: term()
   @type event_name :: list()
+  @type event_value :: number()
   @type event_prefix :: list()
 
   @doc """
@@ -44,8 +45,8 @@ defmodule Events do
 
   Note that you should not rely on the order in which those functions are called.
   """
-  @spec execute(event_name, value :: term()) :: :ok
-  def execute(event_name, value) do
+  @spec execute(event_name, event_value) :: :ok
+  def execute(event_name, value) when is_number(value) do
     handlers = @callback_mod.list_attached_to(event_name)
 
     for {handler_id, _, module, function, config} <- handlers do
