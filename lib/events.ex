@@ -5,6 +5,8 @@ defmodule Events do
   Note that all subscribed functions are called in the process which emits the event.
   """
 
+  require Logger
+
   @callback_mod Application.fetch_env!(:events, :impl)
 
   @type handler_id :: term()
@@ -58,9 +60,15 @@ defmodule Events do
       try do
         apply(module, function, [event_name, value, config])
       catch
-        _, _ ->
-          # it might happen that other processes will call it before it's detached
+        class, reason ->
           detach(handler_id)
+
+          stacktrace = System.stacktrace()
+
+          Logger.error(
+            "Handler #{inspect(module)}.#{function} with ID #{inspect(handler_id)} " <>
+              "has failed and has been detached\n" <> Exception.format(class, reason, stacktrace)
+          )
       end
     end
   end
