@@ -52,7 +52,7 @@ defmodule Events do
   def execute(event_name, value) when is_number(value) do
     assert_event_name_or_prefix(event_name)
 
-    handlers = @callback_mod.list_attached_to(event_name)
+    handlers = @callback_mod.list_handlers_for_event(event_name)
 
     for {handler_id, _, module, function, config} <- handlers do
       try do
@@ -75,7 +75,7 @@ defmodule Events do
   def list_handlers(event_prefix) do
     assert_event_name_or_prefix(event_prefix)
 
-    @callback_mod.list_handlers(event_prefix)
+    @callback_mod.list_handlers_by_prefix(event_prefix)
   end
 
   @doc false

@@ -13,11 +13,11 @@ defmodule Events.Impl do
 
   @callback detach(Events.handler_id()) :: :ok | {:error, :not_found}
 
-  @callback list_attached_to(Events.event_name()) ::
+  @callback list_handlers_for_event(Events.event_name()) ::
               {Events.handler_id(), Events.event_prefix(), module, function :: atom,
                config :: term}
 
-  @callback list_handlers(Events.event_prefix()) ::
+  @callback list_handlers_by_prefix(Events.event_prefix()) ::
               {Events.handler_id(), Events.event_prefix(), module, function :: atom,
                config :: term}
 end

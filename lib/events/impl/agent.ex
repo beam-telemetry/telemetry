@@ -35,7 +35,7 @@ defmodule Events.Impl.Agent do
   end
 
   @impl true
-  def list_attached_to(event) do
+  def list_handlers_for_event(event) do
     handlers = Agent.get(__MODULE__, fn handlers -> Map.values(handlers) end)
 
     Enum.filter(handlers, fn {_, prefix, _, _, _} ->
@@ -44,7 +44,7 @@ defmodule Events.Impl.Agent do
   end
 
   @impl true
-  def list_handlers(prefix) do
+  def list_handlers_by_prefix(prefix) do
     handlers = Agent.get(__MODULE__, fn handlers -> Map.values(handlers) end)
 
     prefix_len = length(prefix)
