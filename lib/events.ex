@@ -12,6 +12,7 @@ defmodule Events do
   @type handler_id :: term()
   @type event_name :: [atom()]
   @type event_value :: number()
+  @type event_metadata :: map()
   @type event_prefix :: [atom()]
 
   @doc """
@@ -22,8 +23,9 @@ defmodule Events do
 
   When events with `event_prefix` are emitted, function `function` in module `module` will be
   called with three arguments:
-  * the exact event name (see `execute/2`)
-  * the event value (see `execute/2`)
+  * the exact event name (see `execute/3`)
+  * the event value (see `execute/3`)
+  * the event metadata (see `execute/3`)
   * the handler configuration, `config`, or `nil` if one wasn't provided
 
   If the function fails (raises, exits or throws) then the handler is removed.
@@ -48,17 +50,18 @@ defmodule Events do
   @doc """
   Emits an event, executing handlers attached to all of its prefixes.
 
-  Note that you should not rely on the order in which those functions are called.
+  Note that you should not rely on the order in which handlers are invoked.
   """
   @spec execute(event_name, event_value) :: :ok
-  def execute(event_name, value) when is_number(value) do
+  @spec execute(event_name, event_value, event_metadata) :: :ok
+  def execute(event_name, value, metadata \\ %{}) when is_number(value) and is_map(metadata) do
     assert_event_name_or_prefix(event_name)
 
     handlers = @callback_mod.list_handlers_for_event(event_name)
 
     for {handler_id, _, module, function, config} <- handlers do
       try do
-        apply(module, function, [event_name, value, config])
+        apply(module, function, [event_name, value, metadata, config])
       catch
         class, reason ->
           detach(handler_id)
