@@ -35,7 +35,7 @@ defmodule Events do
   @spec attach(handler_id, event_prefix, module, function :: atom, config :: term) ::
           :ok | {:error, :already_exists}
   def attach(handler_id, event_prefix, module, function, config \\ nil) do
-    assert_event_name_or_prefix(event_prefix)
+    assert_event_prefix(event_prefix)
     @callback_mod.attach(handler_id, event_prefix, module, function, config)
   end
 
@@ -55,8 +55,6 @@ defmodule Events do
   @spec execute(event_name, event_value) :: :ok
   @spec execute(event_name, event_value, event_metadata) :: :ok
   def execute(event_name, value, metadata \\ %{}) when is_number(value) and is_map(metadata) do
-    assert_event_name_or_prefix(event_name)
-
     handlers = @callback_mod.list_handlers_for_event(event_name)
 
     for {handler_id, _, module, function, config} <- handlers do
@@ -84,7 +82,7 @@ defmodule Events do
   @spec list_handlers(event_prefix) ::
           {handler_id, event_prefix, module, function :: atom, config :: map}
   def list_handlers(event_prefix) do
-    assert_event_name_or_prefix(event_prefix)
+    assert_event_prefix(event_prefix)
 
     @callback_mod.list_handlers_by_prefix(event_prefix)
   end
@@ -92,16 +90,16 @@ defmodule Events do
   @doc false
   defdelegate child_spec(term), to: @callback_mod
 
-  @spec assert_event_name_or_prefix(term()) :: :ok | no_return
-  defp assert_event_name_or_prefix(list) when is_list(list) do
+  @spec assert_event_prefix(term()) :: :ok | no_return
+  defp assert_event_prefix(list) when is_list(list) do
     if Enum.all?(list, &is_atom/1) do
       :ok
     else
-      raise ArgumentError, "Expected event name or prefix to be a list of atoms"
+      raise ArgumentError, "Expected event prefix to be a list of atoms"
     end
   end
 
-  defp assert_event_name_or_prefix(_) do
-    raise ArgumentError, "Expected event name or prefix to be a list of atoms"
+  defp assert_event_prefix(_) do
+    raise ArgumentError, "Expected event prefix to be a list of atoms"
   end
 end

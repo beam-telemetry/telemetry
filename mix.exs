@@ -19,6 +19,9 @@ defmodule Events.MixProject do
   end
 
   defp deps do
-    []
+    [
+      {:benchee, "~> 0.13"},
+      {:erlang_pmp, "~> 0.1"}
+    ]
   end
 end

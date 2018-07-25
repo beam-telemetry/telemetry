@@ -1,0 +1,5 @@
+%{
+  "benchee": {:hex, :benchee, "0.13.1", "bd93ca05be78bcb6159c7176230efeda2f724f7ffd485515175ca411dff4893e", [:mix], [{:deep_merge, "~> 0.1", [hex: :deep_merge, repo: "hexpm", optional: false]}], "hexpm"},
+  "deep_merge": {:hex, :deep_merge, "0.1.1", "c27866a7524a337b6a039eeb8dd4f17d458fd40fbbcb8c54661b71a22fffe846", [:mix], [], "hexpm"},
+  "erlang_pmp": {:hex, :erlang_pmp, "0.1.0", "fa3b1fe247a5c085fc56e09aa06c2e9b46e7c6288d204531641d5f56e72383ce", [:rebar3], [], "hexpm"},
+}
