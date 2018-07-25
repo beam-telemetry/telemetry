@@ -43,13 +43,7 @@ defmodule Events.Impl.Ets do
 
   @impl true
   def list_handlers_for_event(event_name) do
-    patterns = match_patterns_for_event(event_name)
-
-    match_spec =
-      for pattern <- patterns do
-        {pattern, [], [:"$_"]}
-      end
-
+    match_spec = match_spec_for_event(event_name)
     :ets.select(@table, match_spec)
   end
 
@@ -74,24 +68,27 @@ defmodule Events.Impl.Ets do
     end
   end
 
-  @spec match_patterns_for_event(Events.event_name()) :: [:ets.match_pattern()]
-  defp match_patterns_for_event(event_name) do
-    for prefix <- generate_prefixes(event_name) do
-      {:_, prefix, :_, :_, :_}
-    end
+  @spec match_spec_for_event(Events.event_name()) :: :ets.match_spec()
+  defp match_spec_for_event([]) do
+    [match_spec_segment([])]
   end
 
-  @spec generate_prefixes(Events.event_name()) :: [Events.event_prefix()]
-  defp generate_prefixes([]), do: [[]]
-  defp generate_prefixes([_] = event_name), do: [[], event_name]
+  defp match_spec_for_event([_] = event_name) do
+    [match_spec_segment([]), match_spec_segment(event_name)]
+  end
 
-  defp generate_prefixes(event_name) do
+  defp match_spec_for_event(event_name) do
     prefixes =
       for prefix_len <- 1..(length(event_name) - 1) do
-        Enum.take(event_name, prefix_len)
+        match_spec_segment(Enum.take(event_name, prefix_len))
       end
 
-    [[], event_name | prefixes]
+    [match_spec_segment([]), match_spec_segment(event_name) | prefixes]
+  end
+
+  @spec match_spec_segment(Events.event_prefix()) :: tuple()
+  defp match_spec_segment(prefix) do
+    {{:_, prefix, :_, :_, :_}, [], [:"$_"]}
   end
 
   @spec match_pattern_for_prefix(Events.event_prefix()) :: :ets.match_pattern()
