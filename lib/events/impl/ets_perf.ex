@@ -74,12 +74,14 @@ defmodule Events.Impl.EtsPerf do
           :ets.match_spec()
   defp match_spec_for_event(event, last_prefix \\ [], acc \\ [])
 
-  defp match_spec_for_event([], last_prefix, acc) do
-    [match_spec_segment(last_prefix) | acc]
+  defp match_spec_for_event([], prev_rev_prefix, acc) do
+    [match_spec_segment(:lists.reverse(prev_rev_prefix)) | acc]
   end
 
-  defp match_spec_for_event([segment | rest], last_prefix, acc) do
-    match_spec_for_event(rest, last_prefix ++ [segment], [match_spec_segment(last_prefix) | acc])
+  defp match_spec_for_event([segment | rest], prev_rev_prefix, acc) do
+    match_spec_for_event(rest, [segment | prev_rev_prefix], [
+      match_spec_segment(:lists.reverse(prev_rev_prefix)) | acc
+    ])
   end
 
   @spec match_spec_segment(Events.event_prefix()) :: tuple()
