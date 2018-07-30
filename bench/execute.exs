@@ -13,7 +13,7 @@ parallelism = Keyword.get(parsed, :parallelism, System.schedulers_online())
 
 segments = ?a..?z |> Enum.map(&List.wrap/1) |> Enum.map(&:erlang.list_to_atom/1)
 
-impls = [Events.Impl.Agent, Events.Impl.Ets, Events.Impl.EtsPerfCached]
+impls = [Events.Impl.Agent, Events.Impl.Ets, Events.Impl.EtsCached]
 
 Supervisor.start_link(impls, strategy: :one_for_one)
 

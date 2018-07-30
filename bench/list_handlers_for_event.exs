@@ -12,7 +12,7 @@ segments = ?a..?z |> Enum.map(&List.wrap/1) |> Enum.map(&:erlang.list_to_atom/1)
 impls = [
   Events.Impl.Agent,
   Events.Impl.Ets,
-  Events.Impl.EtsPerfCached
+  Events.Impl.EtsCached
 ]
 
 Supervisor.start_link(impls, strategy: :one_for_one)
@@ -29,7 +29,7 @@ Benchee.run(
   %{
     "agent" => fn -> Events.Impl.Agent.list_handlers_for_event(segments) end,
     "ets" => fn -> Events.Impl.Ets.list_handlers_for_event(segments) end,
-    "ets perf cached" => fn -> Events.Impl.EtsPerfCached.list_handlers_for_event(segments) end
+    "ets cached" => fn -> Events.Impl.EtsCached.list_handlers_for_event(segments) end
   },
   time: 10,
   memory_time: 2,

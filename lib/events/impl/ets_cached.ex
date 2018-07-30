@@ -1,14 +1,37 @@
-defmodule Events.Impl.EtsPerfCached do
+defmodule Events.Impl.EtsCached do
   @moduledoc false
-  # Implementation based on a single ETS table
-  # All writes go through an Agent to guarantee uniqueness of subscription IDs.  Reads are executed directly on the ETS table by the calling process. Processes do not lock the
-  # table, so it might happend that other process attaches a handler while the process iterates
-  # through the table to find matching handlers.
+  # Implementation based on two ETS tables: regular table for handlers as in `Ets` implementation
+  # and a cache table.
   #
-  # It has slightly different behaviour than `Events.Impl.Ets`. If no writes to handlers table happen
-  # for a while, then each call to `list_handlers_for_event/1` will write appropriate handlers to
-  # a cache table, which means that subsequent invocations of the event won't require building the
-  # prefixes. This obviously has a memory penalty. Currently each write purges the cache.
+  # If the cache is disabled (more on when it's enabled later) the reads works exactly like in
+  # the `Ets` implementation.
+  #
+  # The cache is a set table with read concurrency. The key is an event name (not a prefix!) and
+  # the values are lists of handler records as stored in regular handler table. As you might suspect,
+  # the list contains all handlers which should be invoked when the event stored as key is emitted.
+  #
+  # When the cache is enabled, `list_handlers_for_event/1` first checks if the handlers which
+  # should be invoked for the event are not already cached. If they are, then those handlers are
+  # returned. If they are not, the handlers are looked up in regular table, exactly the same as
+  # in `Ets` implementation, and then they are cached and returned from the function.
+  #
+  # In this implementation Agent has been replaced with the GenServer. Same as in `Ets` backend,
+  # all writes go though this process. However in this case, the GenServer is also responsible for
+  # enabling and disabling the cache. The cache is enabled when there have been no writes for 500
+  # milliseconds. When the cache is enabled and the write occurs, the whole cache is cleared and
+  # the countdown starts again. The downside of this approach is that the cache will be cleared
+  # when handlers are detached due to their failure.
+  # The improvement here would be to delete only these cache entries which would be affected by the
+  # write (fortunately this quite easy to achive and doesn't require computing the prefixes).
+  # With such solution, the cache would be always enabled. It would probably be beneficial to
+  # detach failing handlers in bathes to lower the number of writes to the table.
+  # There is also a downside of this solution: all writes to cache table go through the GenServer.
+  # It might happen that many processes emit the same event at once and all try to save handlers
+  # in cache which might flood the process with messages. On the other hand, if the processes would
+  # insert entries into cache by themselves, we could run into all sorts of concurrency issues.
+  #
+  # One thing missing from this implementation is cache invalidation. I believe that the LFU (least
+  # frequently used) scheme would be the most appropriate here.
 
   use GenServer
 
