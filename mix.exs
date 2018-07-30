@@ -7,6 +7,8 @@ defmodule Events.MixProject do
       version: "0.1.0",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      preferred_cli_env: ["bench.list_handlers_for_event": :bench],
       deps: deps()
     ]
   end
@@ -18,9 +20,12 @@ defmodule Events.MixProject do
     ]
   end
 
+  defp elixirc_paths(:bench), do: ["lib/", "bench/"]
+  defp elixirc_paths(_), do: ["lib/"]
+
   defp deps do
     [
-      {:benchee, "~> 0.13"},
+      {:benchee, "~> 0.13", only: :bench},
       {:erlang_pmp, "~> 0.1"}
     ]
   end
