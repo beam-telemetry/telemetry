@@ -2,11 +2,11 @@ defmodule EventsTest do
   use ExUnit.Case
 
   defmodule TestHandler do
-    def echo_event(event, value, %{send_to: pid} = config) do
-      send(pid, {:event, event, value, config})
+    def echo_event(event, value, metadata, %{send_to: pid} = config) do
+      send(pid, {:event, event, value, metadata, config})
     end
 
-    def raise_on_event(_event, _value, _config) do
+    def raise_on_event(_event, _value, _metadata, _config) do
       raise "Got an event"
     end
   end
@@ -36,11 +36,12 @@ defmodule EventsTest do
     event = [:a, :test, :event]
     config = %{send_to: self()}
     value = 1
+    metadata = %{some: :metadata}
     Events.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    Events.execute(event, value)
+    Events.execute(event, value, metadata)
 
-    assert_receive {:event, ^event, ^value, ^config}
+    assert_receive {:event, ^event, ^value, ^metadata, ^config}
   end
 
   test "attached mf is not called when event is a prefix of the prefix handler is attached to", %{
@@ -50,11 +51,24 @@ defmodule EventsTest do
     prefix = [:a, :test, :prefix]
     config = %{send_to: self()}
     value = 1
+    metadata = %{some: :metadata}
     Events.attach(handler_id, prefix, TestHandler, :echo_event, config)
+
+    Events.execute(event, value, metadata)
+
+    refute_receive {:event, ^event, ^value, ^metadata, ^config}
+  end
+
+  test "event metadata is an empty map by default", %{handler_id: handler_id} do
+    event = [:a, :test, :event]
+    config = %{send_to: self()}
+    value = 1
+    Events.attach(handler_id, event, TestHandler, :echo_event, config)
 
     Events.execute(event, value)
 
-    refute_receive {:event, ^event, ^value, ^config}
+    assert_receive {:event, ^event, ^value, metadata, ^config}
+    assert %{} == metadata
   end
 
   test "handlers attached to event can be listed", %{handler_id: handler_id} do
@@ -81,6 +95,7 @@ defmodule EventsTest do
     assert [] == Events.list_handlers(event ++ [:something])
   end
 
+  @tag :capture_log
   test "mf is detached when it fails", %{handler_id: handler_id} do
     event = [:a, :test, :event]
     Events.attach(handler_id, event, TestHandler, :raise_on_event)
@@ -94,12 +109,13 @@ defmodule EventsTest do
     event = [:a, :test, :event]
     config = %{send_to: self()}
     value = 1
+    metadata = %{some: :metadata}
     Events.attach(handler_id, event, TestHandler, :echo_event, config)
 
     Events.detach(handler_id)
-    Events.execute(event, value)
+    Events.execute(event, value, metadata)
 
-    refute_receive {:event, ^event, ^value, ^config}
+    refute_receive {:event, ^event, ^value, ^metadata, ^config}
   end
 
   test "detaching returns error if handler with given ID doesn't exist", %{
@@ -115,10 +131,11 @@ defmodule EventsTest do
     event = [:a, :test, :event]
     config = %{send_to: self()}
     value = 1
+    metadata = %{some: :metadata}
     Events.attach(handler_id, prefix, TestHandler, :echo_event, config)
 
-    Events.execute(event, value)
+    Events.execute(event, value, metadata)
 
-    assert_receive {:event, ^event, ^value, ^config}
+    assert_receive {:event, ^event, ^value, ^metadata, ^config}
   end
 end
