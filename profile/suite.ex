@@ -1,5 +1,5 @@
 defmodule Handler do
-  def handle(event, _, _) do
+  def handle(event, _, _, _) do
     event
   end
 end
