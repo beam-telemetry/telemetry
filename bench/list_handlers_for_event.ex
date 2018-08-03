@@ -5,14 +5,15 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
   The benchmark spawns processes executing `Events.Impl.list_events_for_event/1` callback in a loop
   using `Benchee`. The number of spawned processes can be configured using the `--parallelism`
   option. You can also specify how many handlers will be attached using the `--handlers-count`
-  option. The event invoked during the benchmark is selected so that all attached handlers are be the
-  result of the `list_handlers_for_event/1` call.
+  option. Additionally, you can control how many handlers should be matched using the `-m` option.
 
   ## Command line options
 
   * `--parallelism`, `-p` - how many simultaneous processes will be executing the function, defaults
     to number of core the benchmark is running on
   * `--handlers-count`, `-h` - how many handlers will be attached, defaults to 100
+  * `--matching-handlers-count`, `-m` - how many handlers will invoked, defaults to number of
+    attached handlers
   * `--duration`, `-d` - how long the benchmark will run (in seconds), defaults to 10 seconds
   * `--save` - path to a file where the results of the benchmark will be saved. The same path may
     be provided in subsequent runs with the `--load` option to compare the new results with the
@@ -30,11 +31,12 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
     parallelism: :integer,
     duration: :integer,
     handlers_count: :integer,
+    matching_handlers_count: :integer,
     save: :string,
     save_tag: :string,
     load: :string
   ]
-  @aliases [p: :parallelism, d: :duration, h: :handlers_count]
+  @aliases [p: :parallelism, d: :duration, h: :handlers_count, m: :matching_handlers_count]
 
   @impls %{
     "Agent" => Events.Impl.Agent,
@@ -48,9 +50,15 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
 
     parallelism = Keyword.get(opts, :parallelism, System.schedulers_online())
     handlers_count = opts |> Keyword.get(:handlers_count, 100) |> normalize_handlers_count()
+
+    matching_handlers_count =
+      opts
+      |> Keyword.get(:matching_handlers_count, handlers_count)
+      |> normalize_matching_handlers_count(handlers_count)
+
     duration = Keyword.get(opts, :duration, 10)
 
-    event = setup(handlers_count)
+    event = setup(handlers_count, matching_handlers_count)
 
     benchee_opts =
       [parallel: parallelism, time: duration] ++ maybe_save_opts(opts) ++ maybe_load_opts(opts)
@@ -58,7 +66,7 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
     Benchee.run(benchmark_spec(event), benchee_opts)
   end
 
-  defp setup(handlers_count) do
+  defp setup(handlers_count, matching_handlers_count) do
     Mix.shell().info("Setting up benchmark...")
     impl_modules = Map.values(@impls)
 
@@ -73,8 +81,28 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
       end
     end
 
-    covering_event_name(handlers_count)
+    covering_event_name(matching_handlers_count)
   end
+
+  defp normalize_matching_handlers_count(count, handlers_count) when count < 0 do
+    Mix.shell().info(
+      "Requested handlers count is less than 0 (#{count}). Falling back to #{handlers_count}."
+    )
+
+    handlers_count
+  end
+
+  defp normalize_matching_handlers_count(count, handlers_count) when count > handlers_count do
+    Mix.shell().info(
+      "Requested handlers count is greater than #{handlers_count}. Falling back to #{
+        handlers_count
+      }."
+    )
+
+    handlers_count
+  end
+
+  defp normalize_matching_handlers_count(count, _), do: count
 
   defp normalize_handlers_count(count) when count < 0 do
     Mix.shell().info(
