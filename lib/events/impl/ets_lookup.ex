@@ -63,7 +63,7 @@ defmodule Events.Impl.EtsLookup do
   end
 
   defp create_table() do
-    :ets.new(@table, [:bag, :protected, :named_table, keypos: 2, read_concurrency: true])
+    :ets.new(@table, [:duplicate_bag, :protected, :named_table, keypos: 2, read_concurrency: true])
   end
 
   @spec handler_exists?(Events.handler_id()) :: boolean()

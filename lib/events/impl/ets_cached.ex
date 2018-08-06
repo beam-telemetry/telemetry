@@ -135,7 +135,8 @@ defmodule Events.Impl.EtsCached do
   end
 
   defp create_tables() do
-    :ets.new(@table, [:bag, :protected, :named_table, keypos: 2, read_concurrency: true])
+    :ets.new(@table, [:duplicate_bag, :protected, :named_table, keypos: 2, read_concurrency: true])
+
     :ets.new(@cache_table, [:set, :protected, :named_table, keypos: 1, read_concurrency: true])
   end
 
