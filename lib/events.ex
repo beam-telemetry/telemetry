@@ -54,8 +54,9 @@ defmodule Events do
   """
   @spec execute(event_name, event_value) :: :ok
   @spec execute(event_name, event_value, event_metadata) :: :ok
-  def execute(event_name, value, metadata \\ %{}) when is_number(value) and is_map(metadata) do
-    handlers = @callback_mod.list_handlers_for_event(event_name)
+  def execute(event_name, value, metadata \\ %{}, callback_mod \\ @callback_mod)
+      when is_number(value) and is_map(metadata) do
+    handlers = callback_mod.list_handlers_for_event(event_name)
 
     for {handler_id, _, module, function, config} <- handlers do
       try do
