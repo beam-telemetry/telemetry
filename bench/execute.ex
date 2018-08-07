@@ -40,9 +40,7 @@ defmodule Mix.Tasks.Bench.Execute do
 
   @impls %{
     "Agent" => Events.Impl.Agent,
-    "ETS" => Events.Impl.Ets,
-    "ETS with cache" => Events.Impl.EtsCached,
-    "ETS with lookup" => Events.Impl.EtsLookup
+    "ETS" => Events.Impl.Ets
   }
 
   def run(argv) do

@@ -7,7 +7,7 @@ defmodule Events do
 
   require Logger
 
-  @callback_mod Application.fetch_env!(:events, :impl)
+  @callback_mod Events.Impl.Ets
 
   @type handler_id :: term()
   @type event_name :: [atom()]

@@ -6,21 +6,18 @@ defmodule Events.Impl.Ets do
   # to a table go through a single Agent process to make sure that we don't get duplicate handler IDs.
   #
   # Reads (`list_handlers_...`) are executed by the calling process. When looking up handlers for
-  # event, first all the prefixes of event are built. Having those prefixes, a match spec is
-  # constructed to search for all handlers subscribed to these prefixes.
+  # event, first all the prefixes of event are built. Later, the process maps over all prefixes
+  # executing `:ets.lookup/2` for each of them.
   # Surprisingly (or maybe not?) ETS is so fast, that the bottleneck of `list_handlers_for_event/1`
   # is the procedure of building all possible prefixes.
   #
   # When it comes to concurrency guarantess, there are basically none. When one process performs
   # reads handlers for event, it might happen that another process deletes a handler from the table
-  # (because `:ets.select/2` is used which is not atomic).
+  # (because `:ets.lookup/2` is used which is not atomic).
 
   @behaviour Events.Impl
 
-  @compile {:inline, match_spec_segment: 1}
-
   @table __MODULE__
-
   @impl true
   def child_spec(_) do
     %{
@@ -55,8 +52,8 @@ defmodule Events.Impl.Ets do
 
   @impl true
   def list_handlers_for_event(event_name) do
-    match_spec = match_spec_for_event(event_name)
-    :ets.select(@table, match_spec)
+    prefixes = prefixes_for_event(event_name)
+    Enum.flat_map(prefixes, fn p -> :ets.lookup(@table, p) end)
   end
 
   @impl true
@@ -80,23 +77,16 @@ defmodule Events.Impl.Ets do
     end
   end
 
-  @spec match_spec_for_event(Events.event_name(), Events.event_prefix(), [tuple()]) ::
-          :ets.match_spec()
-  defp match_spec_for_event(event, last_prefix \\ [], acc \\ [])
+  @spec prefixes_for_event(Events.event_name(), Events.event_prefix(), [Events.event_prefix()]) ::
+          Events.event_prefix()
+  defp prefixes_for_event(event, last_prefix \\ [], acc \\ [])
 
-  defp match_spec_for_event([], prev_rev_prefix, acc) do
-    [match_spec_segment(:lists.reverse(prev_rev_prefix)) | acc]
+  defp prefixes_for_event([], prev_rev_prefix, acc) do
+    [:lists.reverse(prev_rev_prefix) | acc]
   end
 
-  defp match_spec_for_event([segment | rest], prev_rev_prefix, acc) do
-    match_spec_for_event(rest, [segment | prev_rev_prefix], [
-      match_spec_segment(:lists.reverse(prev_rev_prefix)) | acc
-    ])
-  end
-
-  @spec match_spec_segment(Events.event_prefix()) :: tuple()
-  defp match_spec_segment(prefix) do
-    {{:_, prefix, :_, :_, :_}, [], [:"$_"]}
+  defp prefixes_for_event([segment | rest], prev_rev_prefix, acc) do
+    prefixes_for_event(rest, [segment | prev_rev_prefix], [:lists.reverse(prev_rev_prefix) | acc])
   end
 
   @spec match_pattern_for_prefix(Events.event_prefix()) :: :ets.match_pattern()
