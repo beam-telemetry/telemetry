@@ -1,13 +1,13 @@
-defmodule Events do
+defmodule Telemetry do
   @moduledoc """
-  Events allows to attach functions to be called when events are emitted
+  `Telemetry` allows to attach functions to be called when events are emitted
 
   Note that all subscribed functions are called in the process which emits the event.
   """
 
   require Logger
 
-  @callback_mod Events.Impl.Ets
+  @callback_mod Telemetry.Impl.Ets
 
   @type handler_id :: term()
   @type event_name :: [atom()]
