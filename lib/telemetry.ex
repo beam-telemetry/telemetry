@@ -35,8 +35,23 @@ defmodule Telemetry do
   @spec attach(handler_id, event_name, module, function :: atom, config :: term) ::
           :ok | {:error, :already_exists}
   def attach(handler_id, event_name, module, function, config \\ nil) do
-    assert_event_name_or_prefix(event_name)
-    @callback_mod.attach(handler_id, event_name, module, function, config)
+    attach_many(handler_id, [event_name], module, function, config)
+  end
+
+  @doc """
+  Attaches handler to many events
+
+  The handler will be invoked whenever any of the events in the `event_names` list is emitted. Note
+  that failure of the handler on any of these invokations will detach it from all the events in
+  `event_name` (the same applies to manual detaching using `detach/1`).
+  """
+  @spec attach_many(handler_id, [event_name], module, function :: atom) ::
+          :ok | {:error, :already_exists}
+  @spec attach_many(handler_id, [event_name], module, function :: atom, config :: term) ::
+          :ok | {:error, :already_exists}
+  def attach_many(handler_id, event_names, module, function, config \\ nil) do
+    Enum.each(event_names, &assert_event_name_or_prefix/1)
+    @callback_mod.attach(handler_id, event_names, module, function, config)
   end
 
   @doc """
@@ -77,6 +92,9 @@ defmodule Telemetry do
 
   @doc """
   Returns all handlers attached to events with given prefix.
+
+  Handlers attached to many events at once using `attach_many/4` will be listed once for each
+  event they're attached to.
 
   Note that you can list all handlers by feeding this function an empty list.
   """

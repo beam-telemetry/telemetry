@@ -5,7 +5,7 @@ defmodule Telemetry.Impl do
 
   @callback attach(
               Telemetry.handler_id(),
-              Telemetry.event_name(),
+              [Telemetry.event_name()],
               module,
               function :: atom,
               config :: map

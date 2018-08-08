@@ -140,4 +140,77 @@ defmodule TelemetryTest do
 
     refute_receive {:event, ^event, ^value, ^metadata, ^config}
   end
+
+  test "handler can be attached to many events at once", %{handler_id: handler_id} do
+    event1 = [:a, :first, :event]
+    event2 = [:a, :second, :event]
+    event3 = [:a, :third, :event]
+    config = %{send_to: self()}
+    value = 1
+    metadata = %{some: :metadata}
+    Telemetry.attach_many(handler_id, [event1, event2, event3], TestHandler, :echo_event, config)
+
+    Telemetry.execute(event1, value, metadata)
+    Telemetry.execute(event2, value, metadata)
+    Telemetry.execute(event3, value, metadata)
+
+    for event <- [event1, event2, event3] do
+      assert_receive {:event, ^event, ^value, ^metadata, ^config}
+    end
+  end
+
+  @tag :capture_log
+  test "handler attached to many events at once is detached on failure of any invokation", %{
+    handler_id: handler_id
+  } do
+    event1 = [:a, :first, :event]
+    event2 = [:a, :second, :event]
+    event3 = [:a, :third, :event]
+    config = %{send_to: self()}
+    value = 1
+    metadata = %{some: :metadata}
+
+    Telemetry.attach_many(
+      handler_id,
+      [event1, event2, event3],
+      TestHandler,
+      :raise_on_event,
+      config
+    )
+
+    Telemetry.execute(event1, value, metadata)
+
+    for event <- [event1, event2, event3] do
+      assert [] == Telemetry.list_handlers(event)
+    end
+  end
+
+  test "handler attached to many events at once can be listed", %{handler_id: handler_id} do
+    event1 = [:a, :first, :event]
+    event2 = [:a, :second, :event]
+    event3 = [:a, :third, :event]
+    config = %{send_to: self()}
+    Telemetry.attach_many(handler_id, [event1, event2, event3], TestHandler, :echo_event, config)
+
+    for event <- [event1, event2, event3] do
+      assert [{handler_id, event, TestHandler, :echo_event, config}] ==
+               Telemetry.list_handlers(event)
+    end
+  end
+
+  test "handler attached to many events at once is detached from all of them", %{
+    handler_id: handler_id
+  } do
+    event1 = [:a, :first, :event]
+    event2 = [:a, :second, :event]
+    event3 = [:a, :third, :event]
+    config = %{send_to: self()}
+    Telemetry.attach_many(handler_id, [event1, event2, event3], TestHandler, :echo_event, config)
+
+    Telemetry.detach(handler_id)
+
+    for event <- [event1, event2, event3] do
+      assert [] == Telemetry.list_handlers(event)
+    end
+  end
 end

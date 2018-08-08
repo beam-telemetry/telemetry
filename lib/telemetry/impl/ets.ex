@@ -19,12 +19,17 @@ defmodule Telemetry.Impl.Ets do
   end
 
   @impl true
-  def attach(handler_id, event_name, module, function, config) do
+  def attach(handler_id, event_names, module, function, config) do
     Agent.get_and_update(__MODULE__, fn table ->
       if handler_exists?(handler_id) do
         {{:error, :already_exists}, table}
       else
-        :ets.insert(table, {handler_id, event_name, module, function, config})
+        objects =
+          Enum.map(event_names, fn event_name ->
+            {handler_id, event_name, module, function, config}
+          end)
+
+        :ets.insert(table, objects)
         {:ok, table}
       end
     end)
@@ -60,7 +65,7 @@ defmodule Telemetry.Impl.Ets do
   @spec handler_exists?(Telemetry.handler_id()) :: boolean()
   defp handler_exists?(handler_id) do
     case :ets.match(@table, {handler_id, :_, :_, :_, :_}) do
-      [_] ->
+      [_ | _] ->
         true
 
       [] ->
