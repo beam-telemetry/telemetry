@@ -13,12 +13,12 @@ defmodule Telemetry.Impl.Agent do
   end
 
   @impl true
-  def attach(handler_id, prefix, module, function, config) do
+  def attach(handler_id, event_name, module, function, config) do
     Agent.get_and_update(__MODULE__, fn handlers ->
       if Map.has_key?(handlers, handler_id) do
         {{:error, :already_exists}, handlers}
       else
-        {:ok, Map.put(handlers, handler_id, {handler_id, prefix, module, function, config})}
+        {:ok, Map.put(handlers, handler_id, {handler_id, event_name, module, function, config})}
       end
     end)
   end
@@ -35,11 +35,11 @@ defmodule Telemetry.Impl.Agent do
   end
 
   @impl true
-  def list_handlers_for_event(event) do
+  def list_handlers_for_event(event_name) do
     handlers = Agent.get(__MODULE__, fn handlers -> Map.values(handlers) end)
 
-    Enum.filter(handlers, fn {_, prefix, _, _, _} ->
-      Enum.take(event, length(prefix)) == prefix
+    Enum.filter(handlers, fn {_, handler_event, _, _, _} ->
+      event_name == handler_event
     end)
   end
 
@@ -49,8 +49,8 @@ defmodule Telemetry.Impl.Agent do
 
     prefix_len = length(prefix)
 
-    Enum.filter(handlers, fn {_, sub_prefix, _, _, _} ->
-      Enum.take(sub_prefix, prefix_len) == prefix
+    Enum.filter(handlers, fn {_, handler_event, _, _, _} ->
+      Enum.take(handler_event, prefix_len) == prefix
     end)
   end
 end

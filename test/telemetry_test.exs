@@ -30,7 +30,7 @@ defmodule TelemetryTest do
              Telemetry.attach(handler_id, [:some, :event], TestHandler, :echo_event)
   end
 
-  test "attached mf is called when event exactly matches the prefix", %{
+  test "handler is invoked when event it's attached to is emitted", %{
     handler_id: handler_id
   } do
     event = [:a, :test, :event]
@@ -42,21 +42,6 @@ defmodule TelemetryTest do
     Telemetry.execute(event, value, metadata)
 
     assert_receive {:event, ^event, ^value, ^metadata, ^config}
-  end
-
-  test "attached mf is not called when event is a prefix of the prefix handler is attached to", %{
-    handler_id: handler_id
-  } do
-    event = [:a, :test]
-    prefix = [:a, :test, :prefix]
-    config = %{send_to: self()}
-    value = 1
-    metadata = %{some: :metadata}
-    Telemetry.attach(handler_id, prefix, TestHandler, :echo_event, config)
-
-    Telemetry.execute(event, value, metadata)
-
-    refute_receive {:event, ^event, ^value, ^metadata, ^config}
   end
 
   test "event metadata is an empty map by default", %{handler_id: handler_id} do
@@ -125,7 +110,7 @@ defmodule TelemetryTest do
     assert {:error, :not_found} = Telemetry.detach(handler_id)
   end
 
-  test "mf attached to event prefix is called when handlers are executed", %{
+  test "handler is not invoked when prefix of the event it's attached to is emitted", %{
     handler_id: handler_id
   } do
     prefix = [:a, :test]
@@ -133,10 +118,26 @@ defmodule TelemetryTest do
     config = %{send_to: self()}
     value = 1
     metadata = %{some: :metadata}
-    Telemetry.attach(handler_id, prefix, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    Telemetry.execute(event, value, metadata)
+    Telemetry.execute(prefix, value, metadata)
 
-    assert_receive {:event, ^event, ^value, ^metadata, ^config}
+    refute_receive {:event, ^event, ^value, ^metadata, ^config}
+  end
+
+  test "handler is not invoked when event more specific than the one it's attached to is emitted",
+       %{
+         handler_id: handler_id
+       } do
+    event = [:a, :test, :event]
+    more_specific_event = [:a, :test, :event, :specific]
+    config = %{send_to: self()}
+    value = 1
+    metadata = %{some: :metadata}
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
+
+    Telemetry.execute(more_specific_event, value, metadata)
+
+    refute_receive {:event, ^event, ^value, ^metadata, ^config}
   end
 end
