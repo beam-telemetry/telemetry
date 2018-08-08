@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Bench.Execute do
   @moduledoc """
   Runs a benchmark of `execute/3` function with various implementations
 
-  The benchmark spawns processes executing `Events.Impl.execute/2` function in a loop
+  The benchmark spawns processes executing `Telemetry.Impl.execute/2` function in a loop
   using `Benchee`. The number of spawned processes can be configured using the `--parallelism`
   option. You can also specify how many handlers will be attached using the `--handlers-count`
   option. Additionally, you can control how many handlers will be invoked on each execution using `-m` option.
@@ -39,8 +39,8 @@ defmodule Mix.Tasks.Bench.Execute do
   @aliases [p: :parallelism, d: :duration, h: :handlers_count, m: :matching_handlers_count]
 
   @impls %{
-    "Agent" => Events.Impl.Agent,
-    "ETS" => Events.Impl.Ets
+    "Agent" => Telemetry.Impl.Agent,
+    "ETS" => Telemetry.Impl.Ets
   }
 
   def run(argv) do
@@ -133,7 +133,7 @@ defmodule Mix.Tasks.Bench.Execute do
 
   defp benchmark_spec(event) do
     for {name, impl_module} <- @impls, into: %{} do
-      {name, fn -> Events.execute(event, 1, %{}, impl_module) end}
+      {name, fn -> Telemetry.execute(event, 1, %{}, impl_module) end}
     end
   end
 

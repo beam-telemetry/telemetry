@@ -1,4 +1,4 @@
-defmodule EventsTest do
+defmodule TelemetryTest do
   use ExUnit.Case
 
   defmodule TestHandler do
@@ -15,7 +15,7 @@ defmodule EventsTest do
     handler_id = :crypto.strong_rand_bytes(16) |> Base.encode16()
 
     on_exit fn ->
-      Events.detach(handler_id)
+      Telemetry.detach(handler_id)
     end
 
     {:ok, handler_id: handler_id}
@@ -24,10 +24,10 @@ defmodule EventsTest do
   test "attaching returns error if handler with the same ID already exist", %{
     handler_id: handler_id
   } do
-    :ok = Events.attach(handler_id, [:some, :event], TestHandler, :echo_event)
+    :ok = Telemetry.attach(handler_id, [:some, :event], TestHandler, :echo_event)
 
     assert {:error, :already_exists} =
-             Events.attach(handler_id, [:some, :event], TestHandler, :echo_event)
+             Telemetry.attach(handler_id, [:some, :event], TestHandler, :echo_event)
   end
 
   test "attached mf is called when event exactly matches the prefix", %{
@@ -37,9 +37,9 @@ defmodule EventsTest do
     config = %{send_to: self()}
     value = 1
     metadata = %{some: :metadata}
-    Events.attach(handler_id, event, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    Events.execute(event, value, metadata)
+    Telemetry.execute(event, value, metadata)
 
     assert_receive {:event, ^event, ^value, ^metadata, ^config}
   end
@@ -52,9 +52,9 @@ defmodule EventsTest do
     config = %{send_to: self()}
     value = 1
     metadata = %{some: :metadata}
-    Events.attach(handler_id, prefix, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, prefix, TestHandler, :echo_event, config)
 
-    Events.execute(event, value, metadata)
+    Telemetry.execute(event, value, metadata)
 
     refute_receive {:event, ^event, ^value, ^metadata, ^config}
   end
@@ -63,9 +63,9 @@ defmodule EventsTest do
     event = [:a, :test, :event]
     config = %{send_to: self()}
     value = 1
-    Events.attach(handler_id, event, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    Events.execute(event, value)
+    Telemetry.execute(event, value)
 
     assert_receive {:event, ^event, ^value, metadata, ^config}
     assert %{} == metadata
@@ -74,9 +74,10 @@ defmodule EventsTest do
   test "handlers attached to event can be listed", %{handler_id: handler_id} do
     event = [:a, :test, :event]
     config = %{send_to: self()}
-    Events.attach(handler_id, event, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    assert [{handler_id, event, TestHandler, :echo_event, config}] == Events.list_handlers(event)
+    assert [{handler_id, event, TestHandler, :echo_event, config}] ==
+             Telemetry.list_handlers(event)
   end
 
   test "handlers attached to event prefix can be listed", %{handler_id: handler_id} do
@@ -85,24 +86,24 @@ defmodule EventsTest do
     prefix3 = [:a, :test]
     event = [:a, :test, :event]
     config = %{send_to: self()}
-    Events.attach(handler_id, event, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
 
     for prefix <- [prefix1, prefix2, prefix3] do
       assert [{handler_id, event, TestHandler, :echo_event, config}] ==
-               Events.list_handlers(prefix)
+               Telemetry.list_handlers(prefix)
     end
 
-    assert [] == Events.list_handlers(event ++ [:something])
+    assert [] == Telemetry.list_handlers(event ++ [:something])
   end
 
   @tag :capture_log
   test "mf is detached when it fails", %{handler_id: handler_id} do
     event = [:a, :test, :event]
-    Events.attach(handler_id, event, TestHandler, :raise_on_event)
+    Telemetry.attach(handler_id, event, TestHandler, :raise_on_event)
 
-    Events.execute(event, 1)
+    Telemetry.execute(event, 1)
 
-    assert [] == Events.list_handlers(event)
+    assert [] == Telemetry.list_handlers(event)
   end
 
   test "detached mf is not called when handlers are executed", %{handler_id: handler_id} do
@@ -110,10 +111,10 @@ defmodule EventsTest do
     config = %{send_to: self()}
     value = 1
     metadata = %{some: :metadata}
-    Events.attach(handler_id, event, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
 
-    Events.detach(handler_id)
-    Events.execute(event, value, metadata)
+    Telemetry.detach(handler_id)
+    Telemetry.execute(event, value, metadata)
 
     refute_receive {:event, ^event, ^value, ^metadata, ^config}
   end
@@ -121,7 +122,7 @@ defmodule EventsTest do
   test "detaching returns error if handler with given ID doesn't exist", %{
     handler_id: handler_id
   } do
-    assert {:error, :not_found} = Events.detach(handler_id)
+    assert {:error, :not_found} = Telemetry.detach(handler_id)
   end
 
   test "mf attached to event prefix is called when handlers are executed", %{
@@ -132,9 +133,9 @@ defmodule EventsTest do
     config = %{send_to: self()}
     value = 1
     metadata = %{some: :metadata}
-    Events.attach(handler_id, prefix, TestHandler, :echo_event, config)
+    Telemetry.attach(handler_id, prefix, TestHandler, :echo_event, config)
 
-    Events.execute(event, value, metadata)
+    Telemetry.execute(event, value, metadata)
 
     assert_receive {:event, ^event, ^value, ^metadata, ^config}
   end

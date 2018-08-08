@@ -1,8 +1,8 @@
-defmodule Events.Impl.Agent do
+defmodule Telemetry.Impl.Agent do
   @moduledoc false
   # Dummy implementation, not really performant but good for designing the APIs.
 
-  @behaviour Events.Impl
+  @behaviour Telemetry.Impl
 
   @impl true
   def child_spec(_) do

@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
   @moduledoc """
   Runs a benchmark of `list_handlers_for_event/1` callback of various implementations.
 
-  The benchmark spawns processes executing `Events.Impl.list_events_for_event/1` callback in a loop
+  The benchmark spawns processes executing `Telemetry.Impl.list_events_for_event/1` callback in a loop
   using `Benchee`. The number of spawned processes can be configured using the `--parallelism`
   option. You can also specify how many handlers will be attached using the `--handlers-count`
   option. Additionally, you can control how many handlers should be matched using the `-m` option.
@@ -39,8 +39,8 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
   @aliases [p: :parallelism, d: :duration, h: :handlers_count, m: :matching_handlers_count]
 
   @impls %{
-    "Agent" => Events.Impl.Agent,
-    "ETS" => Events.Impl.Ets
+    "Agent" => Telemetry.Impl.Agent,
+    "ETS" => Telemetry.Impl.Ets
   }
 
   def run(argv) do

@@ -1,4 +1,4 @@
-defmodule Events.Impl.Ets do
+defmodule Telemetry.Impl.Ets do
   @moduledoc false
   # Implementation based on a single ETS bag table with read concurrency.
   #
@@ -15,7 +15,7 @@ defmodule Events.Impl.Ets do
   # reads handlers for event, it might happen that another process deletes a handler from the table
   # (because `:ets.lookup/2` is used which is not atomic).
 
-  @behaviour Events.Impl
+  @behaviour Telemetry.Impl
 
   @table __MODULE__
   @impl true
@@ -66,7 +66,7 @@ defmodule Events.Impl.Ets do
     :ets.new(@table, [:duplicate_bag, :protected, :named_table, keypos: 2, read_concurrency: true])
   end
 
-  @spec handler_exists?(Events.handler_id()) :: boolean()
+  @spec handler_exists?(Telemetry.handler_id()) :: boolean()
   defp handler_exists?(handler_id) do
     case :ets.match(@table, {handler_id, :_, :_, :_, :_}) do
       [_] ->
@@ -77,8 +77,11 @@ defmodule Events.Impl.Ets do
     end
   end
 
-  @spec prefixes_for_event(Events.event_name(), Events.event_prefix(), [Events.event_prefix()]) ::
-          Events.event_prefix()
+  @spec prefixes_for_event(
+          Telemetry.event_name(),
+          Telemetry.event_prefix(),
+          [Telemetry.event_prefix()]
+        ) :: Telemetry.event_prefix()
   defp prefixes_for_event(event, last_prefix \\ [], acc \\ [])
 
   defp prefixes_for_event([], prev_rev_prefix, acc) do
@@ -89,7 +92,7 @@ defmodule Events.Impl.Ets do
     prefixes_for_event(rest, [segment | prev_rev_prefix], [:lists.reverse(prev_rev_prefix) | acc])
   end
 
-  @spec match_pattern_for_prefix(Events.event_prefix()) :: :ets.match_pattern()
+  @spec match_pattern_for_prefix(Telemetry.event_prefix()) :: :ets.match_pattern()
   defp match_pattern_for_prefix(event_prefix) do
     {:_, match_for_prefix(event_prefix), :_, :_, :_}
   end

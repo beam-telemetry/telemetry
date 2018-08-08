@@ -1,9 +1,9 @@
-defmodule Events.MixProject do
+defmodule Telemetry.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :events,
+      app: :telemetry,
       version: "0.1.0",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
@@ -16,7 +16,7 @@ defmodule Events.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Events.Application, []}
+      mod: {Telemetry.Application, []}
     ]
   end
 

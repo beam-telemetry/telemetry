@@ -16,7 +16,7 @@ defmodule Worker do
 
   defp loop(segments, segments_count) do
     # this way all handlers will be executed - worst case scenario
-    Events.execute(segments, 0)
+    Telemetry.execute(segments, 0)
     loop(segments, segments_count)
   end
 end
@@ -90,7 +90,7 @@ defmodule Suite do
   def setup(segments, opts \\ []) do
     for prefix_len <- 0..length(segments) do
       prefix = Enum.take(segments, prefix_len)
-      :ok = Events.attach("id#{prefix_len}", prefix, Handler, :handle)
+      :ok = Telemetry.attach("id#{prefix_len}", prefix, Handler, :handle)
     end
 
     Coordinator.start_link(segments, opts)
@@ -105,7 +105,7 @@ defmodule Suite do
   end
 
   def teardown() do
-    for {id, _, _, _, _} <- Events.list_handlers([]), do: :ok = Events.detach(id)
+    for {id, _, _, _, _} <- Telemetry.list_handlers([]), do: :ok = Telemetry.detach(id)
     Coordinator.stop()
   end
 end
