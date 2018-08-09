@@ -5,11 +5,8 @@ defmodule Telemetry.Impl.Agent do
   @behaviour Telemetry.Impl
 
   @impl true
-  def child_spec(_) do
-    %{
-      id: __MODULE__,
-      start: {Agent, :start_link, [fn -> %{} end, [name: __MODULE__]]}
-    }
+  def start_link() do
+    Agent.start_link(fn -> %{} end, name: __MODULE__)
   end
 
   @impl true

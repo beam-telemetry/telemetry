@@ -5,7 +5,7 @@ defmodule Telemetry.MixProject do
     [
       app: :telemetry,
       version: "0.1.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.4",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: ["bench.list_handlers_for_event": :bench, "bench.execute": :bench],
