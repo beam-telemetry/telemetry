@@ -39,7 +39,6 @@ defmodule Mix.Tasks.Bench.ListHandlersForEvent do
   @aliases [p: :parallelism, d: :duration, h: :handlers_count, m: :matching_handlers_count]
 
   @impls %{
-    "Agent" => Telemetry.Impl.Agent,
     "ETS" => Telemetry.Impl.Ets
   }
 

@@ -2,18 +2,10 @@ defmodule Telemetry.Impl.Ets do
   @moduledoc false
   # Implementation based on a single ETS bag table with read concurrency.
   #
-  # Each handler is stored in a table. A key is a prefix the handler is attached to. All writes
+  # Each handler is stored in a table. A key is an event name the handler is attached to. All writes
   # to a table go through a single Agent process to make sure that we don't get duplicate handler IDs.
   #
-  # Reads (`list_handlers_...`) are executed by the calling process. When looking up handlers for
-  # event, first all the prefixes of event are built. Later, the process maps over all prefixes
-  # executing `:ets.lookup/2` for each of them.
-  # Surprisingly (or maybe not?) ETS is so fast, that the bottleneck of `list_handlers_for_event/1`
-  # is the procedure of building all possible prefixes.
-  #
-  # When it comes to concurrency guarantess, there are basically none. When one process performs
-  # reads handlers for event, it might happen that another process deletes a handler from the table
-  # (because `:ets.lookup/2` is used which is not atomic).
+  # Reads (`list_handlers_...`) are executed by the calling process.
 
   @behaviour Telemetry.Impl
 
@@ -27,12 +19,17 @@ defmodule Telemetry.Impl.Ets do
   end
 
   @impl true
-  def attach(handler_id, prefix, module, function, config) do
+  def attach(handler_id, event_names, module, function, config) do
     Agent.get_and_update(__MODULE__, fn table ->
       if handler_exists?(handler_id) do
         {{:error, :already_exists}, table}
       else
-        :ets.insert(table, {handler_id, prefix, module, function, config})
+        objects =
+          Enum.map(event_names, fn event_name ->
+            {handler_id, event_name, module, function, config}
+          end)
+
+        :ets.insert(table, objects)
         {:ok, table}
       end
     end)
@@ -52,8 +49,7 @@ defmodule Telemetry.Impl.Ets do
 
   @impl true
   def list_handlers_for_event(event_name) do
-    prefixes = prefixes_for_event(event_name)
-    Enum.flat_map(prefixes, fn p -> :ets.lookup(@table, p) end)
+    :ets.lookup(@table, event_name)
   end
 
   @impl true
@@ -69,27 +65,12 @@ defmodule Telemetry.Impl.Ets do
   @spec handler_exists?(Telemetry.handler_id()) :: boolean()
   defp handler_exists?(handler_id) do
     case :ets.match(@table, {handler_id, :_, :_, :_, :_}) do
-      [_] ->
+      [_ | _] ->
         true
 
       [] ->
         false
     end
-  end
-
-  @spec prefixes_for_event(
-          Telemetry.event_name(),
-          Telemetry.event_prefix(),
-          [Telemetry.event_prefix()]
-        ) :: Telemetry.event_prefix()
-  defp prefixes_for_event(event, last_prefix \\ [], acc \\ [])
-
-  defp prefixes_for_event([], prev_rev_prefix, acc) do
-    [:lists.reverse(prev_rev_prefix) | acc]
-  end
-
-  defp prefixes_for_event([segment | rest], prev_rev_prefix, acc) do
-    prefixes_for_event(rest, [segment | prev_rev_prefix], [:lists.reverse(prev_rev_prefix) | acc])
   end
 
   @spec match_pattern_for_prefix(Telemetry.event_prefix()) :: :ets.match_pattern()
