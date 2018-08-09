@@ -1,7 +1,10 @@
 defmodule Telemetry.Impl do
   @moduledoc false
 
-  @callback child_spec(term()) :: Supervisor.child_spec()
+  @callback start_link() ::
+              {:ok, pid()}
+              | :ignore
+              | {:error, {:already_started, pid()} | term()}
 
   @callback attach(
               Telemetry.handler_id(),

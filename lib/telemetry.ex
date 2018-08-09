@@ -107,7 +107,7 @@ defmodule Telemetry do
   end
 
   @doc false
-  defdelegate child_spec(term), to: @callback_mod
+  defdelegate start_link(), to: @callback_mod
 
   @spec assert_event_name_or_prefix(term()) :: :ok | no_return
   defp assert_event_name_or_prefix(list) when is_list(list) do

@@ -11,11 +11,8 @@ defmodule Telemetry.Impl.Ets do
 
   @table __MODULE__
   @impl true
-  def child_spec(_) do
-    %{
-      id: __MODULE__,
-      start: {Agent, :start_link, [&create_table/0, [name: __MODULE__]]}
-    }
+  def start_link() do
+    Agent.start_link(&create_table/0, name: __MODULE__)
   end
 
   @impl true

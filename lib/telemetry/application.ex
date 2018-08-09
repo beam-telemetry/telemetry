@@ -4,8 +4,10 @@ defmodule Telemetry.Application do
   use Application
 
   def start(_type, _args) do
+    import Supervisor.Spec
+
     children = [
-      Telemetry
+      worker(Telemetry, [])
     ]
 
     opts = [strategy: :one_for_one, name: Telemetry.Supervisor]
