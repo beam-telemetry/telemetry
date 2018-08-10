@@ -12,7 +12,8 @@ defmodule Telemetry.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: preferred_cli_env(),
       deps: deps(),
-      docs: docs()
+      docs: docs(),
+      package: package()
     ]
   end
 
@@ -52,6 +53,14 @@ defmodule Telemetry.MixProject do
       extras: [
         "README.md"
       ]
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Arkadiusz Gil", "José Valim"],
+      licenses: ["Apache 2.0"],
+      links: %{"GitHub" => "https://github.com/elixir-telemetry/telemetry"}
     ]
   end
 end
