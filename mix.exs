@@ -39,7 +39,7 @@ defmodule Telemetry.MixProject do
     [
       {:ex_doc, "~> 0.19", only: :docs},
       {:benchee, "~> 0.13", only: :bench},
-      {:erlang_pmp, "~> 0.1"}
+      {:erlang_pmp, "~> 0.1", only: :profile}
     ]
   end
 
