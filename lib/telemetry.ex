@@ -1,8 +1,8 @@
 defmodule Telemetry do
   @moduledoc """
-  `Telemetry` allows to attach functions to be called when events are emitted
+  `Telemetry` allows you to invoke certain functions whenever a particular event is emitted.
 
-  Note that all subscribed functions are called in the process which emits the event.
+  For more information see the documentation for `attach/4`, `attach_many/4` and `execute/3`.
   """
 
   require Logger
@@ -16,19 +16,12 @@ defmodule Telemetry do
   @type event_prefix :: [atom()]
 
   @doc """
-  Attaches a handler to the event
+  Attaches the handler to the event.
 
   `handler_id` must be unique, if another handler with the same ID already exists the
   `{:error, :already_exists}` tuple is returned.
 
-  When event with `event_name` is emitted, function `function` in module `module` will be called
-  with four arguments:
-  * the event name (see `execute/3`)
-  * the event value (see `execute/3`)
-  * the event metadata (see `execute/3`)
-  * the handler configuration, `config`, or `nil` if one wasn't provided
-
-  If the function fails (raises, exits or throws) then the handler is removed.
+  See `execute/3` to learn how the handlers are invoked.
   """
   @spec attach(handler_id, event_name, module, function :: atom) ::
           :ok | {:error, :already_exists}
@@ -39,7 +32,7 @@ defmodule Telemetry do
   end
 
   @doc """
-  Attaches handler to many events
+  Attaches the handler to many events.
 
   The handler will be invoked whenever any of the events in the `event_names` list is emitted. Note
   that failure of the handler on any of these invokations will detach it from all the events in
@@ -55,7 +48,7 @@ defmodule Telemetry do
   end
 
   @doc """
-  Removes existing handler.
+  Removes the existing handler.
 
   If the handler with given ID doesn't exist, `{:error, :not_found}` is returned.
   """
@@ -63,7 +56,16 @@ defmodule Telemetry do
   defdelegate detach(handler_id), to: @callback_mod
 
   @doc """
-  Emits an event, executing handlers attached to it
+  Emits the event, invoking handlers attached to it.
+
+  When the event is emitted, `module.function` provided to `attach/4` is called with four arguments:
+  * the event name
+  * the event value
+  * the event metadata
+  * the handler configuration given to `attach/5`, or `nil` if one wasn't provided
+
+  All the handlers are executed by the process calling this function. If the function fails (raises,
+  exits or throws) then the handler is removed.
 
   Note that you should not rely on the order in which handlers are invoked.
   """
