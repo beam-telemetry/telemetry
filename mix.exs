@@ -13,6 +13,7 @@ defmodule Telemetry.MixProject do
       preferred_cli_env: preferred_cli_env(),
       deps: deps(),
       docs: docs(),
+      description: description(),
       package: package()
     ]
   end
@@ -54,6 +55,12 @@ defmodule Telemetry.MixProject do
         "README.md"
       ]
     ]
+  end
+
+  defp description do
+    """
+    Dynamic dispatching library for metrics and instrumentations.
+    """
   end
 
   defp package do
