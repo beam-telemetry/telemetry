@@ -32,7 +32,8 @@ defmodule Telemetry.MixProject do
     [
       docs: :docs,
       "bench.list_handlers_for_event": :bench,
-      "bench.execute": :bench
+      "bench.execute": :bench,
+      dialyzer: :test
     ]
   end
 
@@ -40,7 +41,8 @@ defmodule Telemetry.MixProject do
     [
       {:ex_doc, "~> 0.19", only: :docs},
       {:benchee, "~> 0.13", only: :bench},
-      {:erlang_pmp, "~> 0.1", only: :profile}
+      {:erlang_pmp, "~> 0.1", only: :profile},
+      {:dialyxir, "~> 1.0.0-rc.1", only: :test}
     ]
   end
 
