@@ -90,6 +90,8 @@ defmodule Telemetry do
           )
       end
     end
+
+    :ok
   end
 
   @doc """
@@ -100,8 +102,9 @@ defmodule Telemetry do
 
   Note that you can list all handlers by feeding this function an empty list.
   """
-  @spec list_handlers(event_prefix) ::
-          {handler_id, event_prefix, module, function :: atom, config :: map}
+  @spec list_handlers(event_prefix) :: [
+          {handler_id, event_name, module, function :: atom, config :: term}
+        ]
   def list_handlers(event_prefix) do
     assert_event_name_or_prefix(event_prefix)
 
