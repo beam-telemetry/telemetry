@@ -6,6 +6,7 @@ defmodule Telemetry.MixProject do
   def project do
     [
       app: :telemetry,
+      name: "Telemetry",
       version: @version,
       elixir: "~> 1.4",
       start_permanent: Mix.env() == :prod,
@@ -49,7 +50,6 @@ defmodule Telemetry.MixProject do
   defp docs do
     [
       main: "readme",
-      name: "Telemetry",
       canonical: "http://hexdocs.pm/telemetry",
       source_url: "https://github.com/elixir-telemetry/telemetry",
       source_ref: "v#{@version}",
