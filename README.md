@@ -27,7 +27,7 @@ end
 and attach this module to the `[:web, :request, :done]` event:
 
 ```elixir
-Telemetry.attach("log-response-handler", [:web, :request, :done], LogResponseHandler, :handle_event)
+Telemetry.attach("log-response-handler", [:web, :request, :done], LogResponseHandler, :handle_event, nil)
 ```
 
 Finally, in your application code you would run:
