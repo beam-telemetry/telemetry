@@ -2,7 +2,7 @@ defmodule Telemetry do
   @moduledoc """
   `Telemetry` allows you to invoke certain functions whenever a particular event is emitted.
 
-  For more information see the documentation for `attach/4`, `attach_many/4` and `execute/3`.
+  For more information see the documentation for `attach/5`, `attach_many/5` and `execute/3`.
   """
 
   require Logger
@@ -23,11 +23,9 @@ defmodule Telemetry do
 
   See `execute/3` to learn how the handlers are invoked.
   """
-  @spec attach(handler_id, event_name, module, function :: atom) ::
-          :ok | {:error, :already_exists}
   @spec attach(handler_id, event_name, module, function :: atom, config :: term) ::
           :ok | {:error, :already_exists}
-  def attach(handler_id, event_name, module, function, config \\ nil) do
+  def attach(handler_id, event_name, module, function, config) do
     attach_many(handler_id, [event_name], module, function, config)
   end
 
@@ -38,11 +36,9 @@ defmodule Telemetry do
   that failure of the handler on any of these invokations will detach it from all the events in
   `event_name` (the same applies to manual detaching using `detach/1`).
   """
-  @spec attach_many(handler_id, [event_name], module, function :: atom) ::
-          :ok | {:error, :already_exists}
   @spec attach_many(handler_id, [event_name], module, function :: atom, config :: term) ::
           :ok | {:error, :already_exists}
-  def attach_many(handler_id, event_names, module, function, config \\ nil) do
+  def attach_many(handler_id, event_names, module, function, config) do
     Enum.each(event_names, &assert_event_name_or_prefix/1)
     @callback_mod.attach(handler_id, event_names, module, function, config)
   end
@@ -58,11 +54,11 @@ defmodule Telemetry do
   @doc """
   Emits the event, invoking handlers attached to it.
 
-  When the event is emitted, `module.function` provided to `attach/4` is called with four arguments:
+  When the event is emitted, `module.function` provided to `attach/5` is called with four arguments:
   * the event name
   * the event value
   * the event metadata
-  * the handler configuration given to `attach/5`, or `nil` if one wasn't provided
+  * the handler configuration given to `attach/5`
 
   All the handlers are executed by the process calling this function. If the function fails (raises,
   exits or throws) then the handler is removed.
@@ -97,7 +93,7 @@ defmodule Telemetry do
   @doc """
   Returns all handlers attached to events with given prefix.
 
-  Handlers attached to many events at once using `attach_many/4` will be listed once for each
+  Handlers attached to many events at once using `attach_many/5` will be listed once for each
   event they're attached to.
 
   Note that you can list all handlers by feeding this function an empty list.

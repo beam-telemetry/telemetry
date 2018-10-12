@@ -24,10 +24,10 @@ defmodule TelemetryTest do
   test "attaching returns error if handler with the same ID already exist", %{
     handler_id: handler_id
   } do
-    :ok = Telemetry.attach(handler_id, [:some, :event], TestHandler, :echo_event)
+    :ok = Telemetry.attach(handler_id, [:some, :event], TestHandler, :echo_event, nil)
 
     assert {:error, :already_exists} =
-             Telemetry.attach(handler_id, [:some, :event], TestHandler, :echo_event)
+             Telemetry.attach(handler_id, [:some, :event], TestHandler, :echo_event, nil)
   end
 
   test "handler is invoked when event it's attached to is emitted", %{
@@ -84,7 +84,7 @@ defmodule TelemetryTest do
   @tag :capture_log
   test "mf is detached when it fails", %{handler_id: handler_id} do
     event = [:a, :test, :event]
-    Telemetry.attach(handler_id, event, TestHandler, :raise_on_event)
+    Telemetry.attach(handler_id, event, TestHandler, :raise_on_event, nil)
 
     Telemetry.execute(event, 1)
 
