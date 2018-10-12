@@ -1,5 +1,7 @@
 # Telemetry
 
+[Documentation](https://hexdocs.pm/telemetry/0.2.0)
+
 Telemetry is a dynamic dispatching library for metrics and instrumentations. It is lightweight,
 small and can be used in any Elixir project.
 
@@ -38,6 +40,19 @@ instead of `Telemetry.execute/2` call - and you would be right! But now imagine 
 would publish its own set of events with information useful for introspection. Currently each library
 rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
 cases across whole ecosystem.
+
+## Installation
+
+Telemetry is available on [Hex](https://hex.pm/packages/telemetry). To install, just add it to
+your dependencies:
+
+```elixir
+defp deps() do
+  [
+    {:telemetry, "~> 0.2.0"}
+  ]
+end
+```
 
 ## Copyright and License
 
