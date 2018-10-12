@@ -7,7 +7,7 @@ defmodule Telemetry.Application do
     import Supervisor.Spec
 
     children = [
-      worker(Telemetry, [])
+      worker(Telemetry.HandlerTable, [])
     ]
 
     opts = [strategy: :one_for_one, name: Telemetry.Supervisor]

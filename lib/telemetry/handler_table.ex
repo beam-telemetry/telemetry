@@ -1,22 +1,29 @@
-defmodule Telemetry.Impl.Ets do
+defmodule Telemetry.HandlerTable do
   @moduledoc false
-  # Implementation based on a single ETS bag table with read concurrency.
+  # ETS table for handlers.
   #
-  # Each handler is stored in a table. A key is an event name the handler is attached to. All writes
+  # Each handler is stored in the table. A key is an event name the handler is attached to. All writes
   # to a table go through a single Agent process to make sure that we don't get duplicate handler IDs.
   #
   # Reads (`list_handlers_...`) are executed by the calling process.
 
-  @behaviour Telemetry.Impl
-
   @table __MODULE__
-  @impl true
+
+  ## API
+
+  @spec start_link() :: Agent.on_start()
   def start_link() do
     Agent.start_link(&create_table/0, name: __MODULE__)
   end
 
-  @impl true
-  def attach(handler_id, event_names, module, function, config) do
+  @spec insert(
+          Telemetry.handler_id(),
+          [Telemetry.event_name()],
+          module,
+          function :: atom,
+          config :: map
+        ) :: :ok | {:error, :already_exists}
+  def insert(handler_id, event_names, module, function, config) do
     Agent.get_and_update(__MODULE__, fn table ->
       if handler_exists?(handler_id) do
         {{:error, :already_exists}, table}
@@ -32,8 +39,8 @@ defmodule Telemetry.Impl.Ets do
     end)
   end
 
-  @impl true
-  def detach(handler_id) do
+  @spec delete(Telemetry.handler_id()) :: :ok | {:error, :not_found}
+  def delete(handler_id) do
     Agent.get_and_update(__MODULE__, fn table ->
       if handler_exists?(handler_id) do
         :ets.match_delete(table, {handler_id, :_, :_, :_, :_})
@@ -44,16 +51,24 @@ defmodule Telemetry.Impl.Ets do
     end)
   end
 
-  @impl true
-  def list_handlers_for_event(event_name) do
+  @spec list_for_event(Telemetry.event_name()) :: [
+          {Telemetry.handler_id(), Telemetry.event_name(), module, function :: atom,
+           config :: term}
+        ]
+  def list_for_event(event_name) do
     :ets.lookup(@table, event_name)
   end
 
-  @impl true
-  def list_handlers_by_prefix(event_prefix) do
+  @spec list_by_prefix(Telemetry.event_prefix()) :: [
+          {Telemetry.handler_id(), Telemetry.event_name(), module, function :: atom,
+           config :: term}
+        ]
+  def list_by_prefix(event_prefix) do
     pattern = match_pattern_for_prefix(event_prefix)
     :ets.match_object(@table, pattern)
   end
+
+  ## Helpers
 
   defp create_table() do
     :ets.new(@table, [:duplicate_bag, :protected, :named_table, keypos: 2, read_concurrency: true])

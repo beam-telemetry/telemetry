@@ -7,13 +7,15 @@ defmodule Telemetry do
 
   require Logger
 
-  @callback_mod Telemetry.Impl.Ets
+  alias Telemetry.HandlerTable
 
   @type handler_id :: term()
   @type event_name :: [atom()]
   @type event_value :: number()
   @type event_metadata :: map()
   @type event_prefix :: [atom()]
+
+  ## API
 
   @doc """
   Attaches the handler to the event.
@@ -40,7 +42,7 @@ defmodule Telemetry do
           :ok | {:error, :already_exists}
   def attach_many(handler_id, event_names, module, function, config) do
     Enum.each(event_names, &assert_event_name_or_prefix/1)
-    @callback_mod.attach(handler_id, event_names, module, function, config)
+    HandlerTable.insert(handler_id, event_names, module, function, config)
   end
 
   @doc """
@@ -49,7 +51,9 @@ defmodule Telemetry do
   If the handler with given ID doesn't exist, `{:error, :not_found}` is returned.
   """
   @spec detach(handler_id) :: :ok | {:error, :not_found}
-  defdelegate detach(handler_id), to: @callback_mod
+  def detach(handler_id) do
+    HandlerTable.delete(handler_id)
+  end
 
   @doc """
   Emits the event, invoking handlers attached to it.
@@ -67,9 +71,9 @@ defmodule Telemetry do
   """
   @spec execute(event_name, event_value) :: :ok
   @spec execute(event_name, event_value, event_metadata) :: :ok
-  def execute(event_name, value, metadata \\ %{}, callback_mod \\ @callback_mod)
+  def execute(event_name, value, metadata \\ %{})
       when is_number(value) and is_map(metadata) do
-    handlers = callback_mod.list_handlers_for_event(event_name)
+    handlers = HandlerTable.list_for_event(event_name)
 
     for {handler_id, _, module, function, config} <- handlers do
       try do
@@ -104,11 +108,10 @@ defmodule Telemetry do
   def list_handlers(event_prefix) do
     assert_event_name_or_prefix(event_prefix)
 
-    @callback_mod.list_handlers_by_prefix(event_prefix)
+    HandlerTable.list_by_prefix(event_prefix)
   end
 
-  @doc false
-  defdelegate start_link(), to: @callback_mod
+  ## Helpers
 
   @spec assert_event_name_or_prefix(term()) :: :ok | no_return
   defp assert_event_name_or_prefix(list) when is_list(list) do

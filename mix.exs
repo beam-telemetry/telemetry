@@ -10,7 +10,6 @@ defmodule Telemetry.MixProject do
       version: @version,
       elixir: "~> 1.4",
       start_permanent: Mix.env() == :prod,
-      elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: preferred_cli_env(),
       deps: deps(),
       docs: docs(),
@@ -26,14 +25,9 @@ defmodule Telemetry.MixProject do
     ]
   end
 
-  defp elixirc_paths(:bench), do: ["lib/", "bench/"]
-  defp elixirc_paths(_), do: ["lib/"]
-
   defp preferred_cli_env() do
     [
       docs: :docs,
-      "bench.list_handlers_for_event": :bench,
-      "bench.execute": :bench,
       dialyzer: :test
     ]
   end
@@ -41,7 +35,6 @@ defmodule Telemetry.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.19", only: :docs},
-      {:benchee, "~> 0.13", only: :bench},
       {:erlang_pmp, "~> 0.1", only: :profile},
       {:dialyxir, "~> 1.0.0-rc.1", only: :test}
     ]
