@@ -1,8 +1,5 @@
 # Telemetry
 
-**NOTICE**: This library is in very much alpha stage. API may (and probably will!) change in
-unpredictable ways. Use with caution.
-
 Telemetry is a dynamic dispatching library for metrics and instrumentations. It is lightweight,
 small and can be used in any Elixir project.
 
