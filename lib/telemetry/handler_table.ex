@@ -21,7 +21,7 @@ defmodule Telemetry.HandlerTable do
           [Telemetry.event_name()],
           module,
           function :: atom,
-          config :: map
+          config :: term
         ) :: :ok | {:error, :already_exists}
   def insert(handler_id, event_names, module, function, config) do
     Agent.get_and_update(__MODULE__, fn table ->
