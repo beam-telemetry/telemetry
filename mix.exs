@@ -44,7 +44,7 @@ defmodule Telemetry.MixProject do
     [
       main: "readme",
       canonical: "http://hexdocs.pm/telemetry",
-      source_url: "https://github.com/elixir-telemetry/telemetry",
+      source_url: "https://github.com/beam-telemetry/telemetry",
       source_ref: "v#{@version}",
       extras: [
         "README.md"
@@ -62,7 +62,7 @@ defmodule Telemetry.MixProject do
     [
       maintainers: ["Arkadiusz Gil", "José Valim"],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => "https://github.com/elixir-telemetry/telemetry"}
+      links: %{"GitHub" => "https://github.com/beam-telemetry/telemetry"}
     ]
   end
 end
