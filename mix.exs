@@ -36,7 +36,7 @@ defmodule Telemetry.MixProject do
     [
       {:ex_doc, "~> 0.19", only: :docs},
       {:erlang_pmp, "~> 0.1", only: :profile},
-      {:dialyxir, "~> 1.0.0-rc.1", only: :test}
+      {:dialyxir, "~> 1.0.0-rc.1", only: :test, runtime: false}
     ]
   end
 
