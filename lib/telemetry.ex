@@ -95,6 +95,18 @@ defmodule Telemetry do
   end
 
   @doc """
+  Calls a function and emits the given event with the execution time in microseconds.
+
+  The given function's result is returned.
+  """
+  @spec measure(event_name, event_metadata, function) :: any
+  def measure(event_name, event_metadata, fun) do
+    {elapsed, result} = :timer.tc(fun)
+    execute(event_name, elapsed, event_metadata)
+    result
+  end
+
+  @doc """
   Returns all handlers attached to events with given prefix.
 
   Handlers attached to many events at once using `attach_many/5` will be listed once for each

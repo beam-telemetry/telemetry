@@ -213,4 +213,22 @@ defmodule TelemetryTest do
       assert [] == Telemetry.list_handlers(event)
     end
   end
+
+  test "measure emits the given event", %{handler_id: handler_id} do
+    event = [:foo, :bar]
+    config = %{send_to: self()}
+    metadata = %{some: :metadata}
+    Telemetry.attach(handler_id, event, TestHandler, :echo_event, config)
+
+    Telemetry.measure(event, metadata, fn -> :timer.sleep(5) end)
+
+    value =
+      receive do
+        {:event, ^event, val, ^metadata, ^config} -> val
+      after
+        500 -> flunk("Expected event not received!")
+      end
+
+    assert is_integer(value) and value > 0
+  end
 end
