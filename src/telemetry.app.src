@@ -1,8 +1,8 @@
 {application, telemetry,
- [{description, "An OTP application"},
-  {vsn, "0.1.0"},
+ [{description, "Dynamic dispatching library for metrics and instrumentations"},
+  {vsn, "git"},
   {registered, []},
-  {mod, { telemetry_app, []}},
+  {mod, {telemetry_app, []}},
   {applications,
    [kernel,
     stdlib
@@ -12,5 +12,5 @@
 
   {maintainers, []},
   {licenses, ["Apache 2.0"]},
-  {links, []}
+  {links, [{"Github", "https://github.com/beam-telemetry/telemetry"}]}
  ]}.
