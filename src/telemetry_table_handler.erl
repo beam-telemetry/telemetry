@@ -85,12 +85,13 @@ handle_cast(_Msg, State) ->
 
 create_table() ->
     ets:new(?MODULE, [duplicate_bag, protected, named_table,
-                      {keypos, 2}, {read_concurrency, true}]).
+                      {keypos, 3}, {read_concurrency, true}]).
 
 match_pattern_for_prefix(EventPrefix) ->
     #handler{event_name=match_for_prefix(EventPrefix),
              _='_'}.
 
+-dialyzer({nowarn_function, match_for_prefix/1}).
 match_for_prefix([]) ->
     '_';
 match_for_prefix([Segment | Rest]) ->

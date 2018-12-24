@@ -20,7 +20,7 @@
 -type event_prefix() :: [atom()].
 -type config() :: term().
 -type handler_function() :: fun((event_name(), event_value(), event_metadata(), term()) -> ok).
--type handler() :: {handler_id(), event_name(), handler_function(), config()}.
+-type handler() :: {handler, handler_id(), event_name(), handler_function(), config()}.
 
 -export_type([handler_id/0,
               event_name/0,
@@ -60,11 +60,11 @@ detach(HandlerId) ->
     telemetry_table_handler:delete(HandlerId).
 
 %% @doc Emits the event, invoking handlers attached to it.
-%% When the event is emitted, `module:function` provided to `attach/5` is called with four arguments:
+%% When the event is emitted, `module:function` provided to `attach/4` is called with four arguments:
 %% * the event name
 %% * the event value
 %% * the event metadata
-%% * the handler configuration given to `attach/5`
+%% * the handler configuration given to `attach/4`
 %% All the handlers are executed by the process calling this function. If the function fails (raises,
 %% exits or throws) then the handler is removed.
 %% Note that you should not rely on the order in which handlers are invoked.
@@ -82,7 +82,7 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
                                                    is_map(EventMetadata) ->
     Handlers = telemetry_table_handler:list_for_event(EventName),
     ApplyFun =
-        fun({HandlerId, _, HandlerFunction, Config}) ->
+        fun({_, HandlerId, _, HandlerFunction, Config}) ->
             try
                 HandlerFunction(EventName, EventValue, EventMetadata, Config)
             catch
@@ -98,7 +98,7 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
 
 
 %% @doc Returns all handlers attached to events with given prefix.
-%% Handlers attached to many events at once using `attach_many/5` will be listed once for each
+%% Handlers attached to many events at once using `attach_many/4` will be listed once for each
 %% event they're attached to.
 %% Note that you can list all handlers by feeding this function an empty list.
 -spec list_handlers(event_prefix()) -> [handler()].
@@ -108,11 +108,11 @@ list_handlers(EventPrefix) ->
 
 %%
 
--spec assert_event_names_or_prefixes(term()) -> ok | no_return.
+-spec assert_event_names_or_prefixes(term()) -> [ok].
 assert_event_names_or_prefixes(List) when is_list(List) ->
     [assert_event_name_or_prefix(E) || E <- List].
 
--spec assert_event_name_or_prefix(term()) -> ok | no_return.
+-spec assert_event_name_or_prefix(term()) -> ok.
 assert_event_name_or_prefix(List) when is_list(List) ->
     case lists:all(fun erlang:is_atom/1, List) of
         true ->

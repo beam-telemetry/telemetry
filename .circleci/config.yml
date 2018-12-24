@@ -1,13 +1,50 @@
 version: 2.1
 
-jobs:
-  build_and_test:
-    steps:
-      - checkout
-      - run: "echo 'Hello, World!'"
+orbs:
+  telemetry:
+    orbs:
+      rebar3: tsloughter/rebar3@0.5.4
+
+    jobs:
+      build_and_test:
+        parameters:
+          version:
+            description: The Erlang/OTP docker image tag to use.
+            type: string
+
+        executor:
+          name: rebar3/erlang
+          version: <<parameters.version>>-alpine
+        steps:
+          - rebar3/install_ca_certs
+          - checkout
+          - rebar3/with_deps_cache:
+              steps:
+                - rebar3/compile
+                - rebar3/dialyzer
+                - rebar3/xref
+                - rebar3/ct
+
+                - store_test_results:
+                    path: ~/project/_build/test/logs/
+                - store_artifacts:
+                    path: ~/project/_build/test/logs
+                    destination: common_test
+
+                - rebar3/cover
+                - run:
+                    command: |
+                      rebar3 covertool generate
+                      apk add --update python python-dev py-pip git
+                      pip install codecov && codecov -f _build/test/covertool/telemetry.covertool.xml
 
 workflows:
-    version: 2.1
-    build_and_test:
-        jobs:
-            - build_and_test
+  version: 2.1
+  build_and_test:
+    jobs:
+      - telemetry/build_and_test:
+          name: "otp-21.2"
+          version: "21.2"
+      - telemetry/build_and_test:
+          name: "otp-21.1"
+          version: "21.1"

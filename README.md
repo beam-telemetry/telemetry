@@ -3,7 +3,7 @@
 [Documentation](https://hexdocs.pm/telemetry/0.2.0)
 
 Telemetry is a dynamic dispatching library for metrics and instrumentations. It is lightweight,
-small and can be used in any Elixir project.
+small and can be used in any Erlang or Elixir project.
 
 In a nutshell, you register a custom module and function to be invoked for certain events,
 which are executed whenever there is such event. Event name is a list of atoms. Each event is
@@ -23,16 +23,35 @@ defmodule LogResponseHandler do
 end
 ```
 
+```erlang
+-module(log_response_handler).
+
+-include_lib("kernel/include/logger.hrl")
+
+handle_event([web, request, done], Latency, #{path := Path,
+                                              status_code := Status}, _Config) ->
+  ?LOG_INFO("[~s] ~p sent in ~p", [Path, Status, Latency]).
+  
+```
+
 and attach this module to the `[:web, :request, :done]` event:
 
 ```elixir
-Telemetry.attach("log-response-handler", [:web, :request, :done], LogResponseHandler, :handle_event, nil)
+Telemetry.attach("log-response-handler", [:web, :request, :done], &LogResponseHandler.handle_event/4, nil)
+```
+
+```erlang
+telemetry:attach(<<"log-response-handler">>, [web, request, done], fun log_response_handler:handle_event/4, [])
 ```
 
 Finally, in your application code you would run:
 
 ```elixir
 Telemetry.execute([:web, :request, :done], latency, %{request_path: path, status_code: status})
+```
+
+```erlang
+telemetry:execute([web, request, done], Latency, #{request_path => Path, status_code => Status})
 ```
 
 You might think that it isn't very useful, because you could just as well write a log statement
@@ -44,14 +63,20 @@ cases across whole ecosystem.
 ## Installation
 
 Telemetry is available on [Hex](https://hex.pm/packages/telemetry). To install, just add it to
-your dependencies:
+your dependencies in `mix.exs`:
 
 ```elixir
 defp deps() do
   [
-    {:telemetry, "~> 0.2.0"}
+    {:telemetry, "~> 0.3.0"}
   ]
 end
+```
+
+or `rebar.config`:
+
+``` erlang
+{deps, [{telemetry, "~> 0.3.0"}]}.
 ```
 
 ## Copyright and License
