@@ -85,7 +85,10 @@ list_handlers(Config) ->
     HandlerFun = fun ?MODULE:echo_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, EventConfig),
 
-    ?assertMatch([{handler, HandlerId, Event, HandlerFun, EventConfig}],
+    ?assertMatch([#{handler_id := HandlerId,
+                    event_name := Event,
+                    function := HandlerFun,
+                    config := EventConfig}],
                  telemetry:list_handlers(Event)).
 
 %% handlers attached to event prefix can be listed
@@ -99,7 +102,10 @@ list_for_prefix(Config) ->
     HandlerFun = fun ?MODULE:echo_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, EventConfig),
 
-    [?assertEqual([{handler, HandlerId, Event, HandlerFun, EventConfig}],
+    [?assertMatch([#{handler_id := HandlerId,
+                     event_name := Event,
+                     function := HandlerFun,
+                     config := EventConfig}],
                   telemetry:list_handlers(Prefix)) || Prefix <- [Prefix1, Prefix2, Prefix3]],
 
      ?assertEqual([], telemetry:list_handlers(Event ++ [something])).
@@ -111,7 +117,10 @@ detach_on_exception(Config) ->
     HandlerFun = fun ?MODULE:raise_on_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, []),
 
-    ?assertEqual([{handler, HandlerId, Event, HandlerFun, []}],
+    ?assertMatch([#{handler_id := HandlerId,
+                    event_name := Event,
+                    function := HandlerFun,
+                    config := []}],
                  telemetry:list_handlers(Event)),
 
     telemetry:execute(Event, 1),
@@ -240,7 +249,10 @@ list_handler_on_many(Config) ->
     telemetry:attach_many(HandlerId, [Event1, Event2, Event3], HandlerFun, EventConfig),
 
     lists:foreach(fun(Event) ->
-                          ?assertEqual([{handler, HandlerId, Event, HandlerFun, EventConfig}],
+                          ?assertMatch([#{handler_id := HandlerId,
+                                          event_name := Event,
+                                          function := HandlerFun,
+                                          config := EventConfig}],
                                        telemetry:list_handlers(Event))
     end, [Event1, Event2, Event3]).
 

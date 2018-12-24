@@ -22,11 +22,9 @@
          handle_call/3,
          handle_cast/2]).
 
+-include("telemetry.hrl").
+
 -record(state, {tid :: ets:tid()}).
--record(handler, {handler_id :: telemetry:handler_id(),
-                  event_name :: telemetry:event_name() | '_',
-                  function   :: telemetry:handler_function(),
-                  config     :: term() | '_'}).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).

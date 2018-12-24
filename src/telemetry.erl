@@ -12,6 +12,7 @@
          execute/3]).
 
 -include_lib("kernel/include/logger.hrl").
+-include("telemetry.hrl").
 
 -type handler_id() :: term().
 -type event_name() :: [atom()].
@@ -20,7 +21,10 @@
 -type event_prefix() :: [atom()].
 -type config() :: term().
 -type handler_function() :: fun((event_name(), event_value(), event_metadata(), term()) -> ok).
--type handler() :: {handler, handler_id(), event_name(), handler_function(), config()}.
+-type handler() :: #{handler_id := handler_id(),
+                     event_name := event_name(),
+                     function := handler_function(),
+                     config := config()}.
 
 -export_type([handler_id/0,
               event_name/0,
@@ -82,7 +86,9 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
                                                    is_map(EventMetadata) ->
     Handlers = telemetry_table_handler:list_for_event(EventName),
     ApplyFun =
-        fun({_, HandlerId, _, HandlerFunction, Config}) ->
+        fun(#handler{handler_id=HandlerId,
+                     function=HandlerFunction,
+                     config=Config}) ->
             try
                 HandlerFunction(EventName, EventValue, EventMetadata, Config)
             catch
@@ -104,7 +110,13 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
 -spec list_handlers(event_prefix()) -> [handler()].
 list_handlers(EventPrefix) ->
     assert_event_name_or_prefix(EventPrefix),
-    telemetry_table_handler:list_by_prefix(EventPrefix).
+    [#{handler_id => HandlerId,
+       event_name => EventName,
+       function => Function,
+       config => Config} || #handler{handler_id=HandlerId,
+                                     event_name=EventName,
+                                     function=Function,
+                                     config=Config} <- telemetry_table_handler:list_by_prefix(EventPrefix)].
 
 %%
 
