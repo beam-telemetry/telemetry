@@ -1,5 +1,8 @@
 %%%-------------------------------------------------------------------
 %% @doc
+%% `telemetry` allows you to invoke certain functions whenever a
+%% particular event is emitted. For more information see the
+%% documentation for `attach/4`, `attach_many/4` and `execute/3`.
 %% @end
 %%%-------------------------------------------------------------------
 -module(telemetry).
@@ -11,8 +14,14 @@
          execute/2,
          execute/3]).
 
--include_lib("kernel/include/logger.hrl").
 -include("telemetry.hrl").
+
+-ifdef('OTP_RELEASE').
+-include_lib("kernel/include/logger.hrl").
+-else.
+-define(LOG_ERROR(Msg, Args), error_logger:error_msg(Msg, Args)).
+-endif.
+
 
 -type handler_id() :: term().
 -type event_name() :: [atom()].
@@ -44,7 +53,7 @@
 attach(HandlerId, EventName, Function, Config) ->
     attach_many(HandlerId, [EventName], Function, Config).
 
-%% #doc Attaches the handler to many events.
+%% @doc Attaches the handler to many events.
 %% The handler will be invoked whenever any of the events in the `event_names` list is emitted. Note
 %% that failure of the handler on any of these invokations will detach it from all the events in
 %% `event_name` (the same applies to manual detaching using `detach/1`).
@@ -94,9 +103,9 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
             catch
                 Class:Reason:Stacktrace ->
                     detach(HandlerId),
-                    ?LOG_INFO("Handler ~p has failed and has been detached. "
-                              "Exception: class=~p reason=~p stacktrace=~p",
-                              [HandlerId, Class, Reason, Stacktrace])
+                    ?LOG_ERROR("Handler ~p has failed and has been detached. "
+                               "Exception: class=~p reason=~p stacktrace=~p",
+                               [HandlerId, Class, Reason, Stacktrace])
             end
         end,
 
@@ -130,7 +139,7 @@ assert_event_name_or_prefix(List) when is_list(List) ->
         true ->
             ok;
         false ->
-            erlang:error(badarg)
+            erlang:error(badarg, List)
     end;
-assert_event_name_or_prefix(_) ->
-    erlang:error(badarg).
+assert_event_name_or_prefix(List) ->
+    erlang:error(badarg, List).

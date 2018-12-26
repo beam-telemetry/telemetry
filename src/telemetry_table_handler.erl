@@ -1,4 +1,5 @@
 %%%-------------------------------------------------------------------
+%% @private
 %% @doc ETS table for handlers.
 %%
 %% Each handler is stored in the table. A key is an event name the
