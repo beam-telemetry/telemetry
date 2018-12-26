@@ -5,7 +5,7 @@
 %% handler is attached to. All writes to a table go through a single
 %% Agent process to make sure that we don't get duplicate handler IDs.
 %%
-%% Reads (`list_handlers_...`) are executed by the calling process.
+%% Reads (`list_handlers_...') are executed by the calling process.
 %% @end
 %%%-------------------------------------------------------------------
 -module(telemetry_table_handler).
