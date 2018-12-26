@@ -3,7 +3,7 @@ version: 2.1
 orbs:
   telemetry:
     orbs:
-      rebar3: tsloughter/rebar3@0.5.4
+      rebar3: tsloughter/rebar3@0.5.5
 
     jobs:
       build_and_test:
@@ -11,14 +11,18 @@ orbs:
           version:
             description: The Erlang/OTP docker image tag to use.
             type: string
-
+          pkg_install_cmd:
+            type: string
+            default: apk add --no-cache
         executor:
           name: rebar3/erlang
-          version: <<parameters.version>>-alpine
+          version: <<parameters.version>>
         steps:
-          - rebar3/install_ca_certs
+          - rebar3/install_ca_certs:
+              pkg_install_cmd: <<parameters.pkg_install_cmd>>
           - checkout
           - rebar3/with_deps_cache:
+              cache_key_postfix: -<<parameters.version>>
               steps:
                 - rebar3/compile
                 - rebar3/dialyzer
@@ -32,11 +36,11 @@ orbs:
                     destination: common_test
 
                 - rebar3/cover
-                - run:
-                    command: |
-                      rebar3 covertool generate
-                      apk add --update python python-dev py-pip git
-                      pip install codecov && codecov -f _build/test/covertool/telemetry.covertool.xml
+                # - run:
+                #     command: |
+                #       rebar3 covertool generate
+                #       apk add --update python python-dev py-pip git
+                #       pip install codecov && codecov -f _build/test/covertool/telemetry.covertool.xml
 
 workflows:
   version: 2.1
@@ -44,7 +48,14 @@ workflows:
     jobs:
       - telemetry/build_and_test:
           name: "otp-21.2"
-          version: "21.2"
+          version: "21.2-alpine"
       - telemetry/build_and_test:
           name: "otp-21.1"
-          version: "21.1"
+          version: "21.1-alpine"
+      - telemetry/build_and_test:
+          name: "otp-20"
+          version: "20-alpine"
+      - telemetry/build_and_test:
+          name: "otp-19"
+          version: "19"
+          pkg_install_cmd: "apt-get update && apt-get install"

@@ -21,7 +21,10 @@
 
 -export([init/1,
          handle_call/3,
-         handle_cast/2]).
+         handle_cast/2,
+         handle_info/2,
+         code_change/3,
+         terminate/2]).
 
 -include("telemetry.hrl").
 
@@ -79,6 +82,15 @@ handle_call({delete, HandlerId}, _From, State) ->
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
+
+handle_info(_Msg, State) ->
+    {noreply, State}.
+
+code_change(_, State, _) ->
+    {ok, State}.
+
+terminate(_Reason, _State) ->
+    ok.
 
 %%
 
