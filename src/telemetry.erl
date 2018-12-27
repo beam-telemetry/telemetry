@@ -100,7 +100,7 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
             try
                 HandlerFunction(EventName, EventValue, EventMetadata, Config)
             catch
-                Class:Reason:Stacktrace ->
+                ?WITH_STACKTRACE(Class, Reason, Stacktrace)
                     detach(HandlerId),
                     ?LOG_ERROR("Handler ~p has failed and has been detached. "
                                "Exception: class=~p reason=~p stacktrace=~p",
