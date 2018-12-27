@@ -37,7 +37,7 @@ handle_event([web, request, done], Latency, #{path := Path,
 and attach this module to the `[:web, :request, :done]` event:
 
 ```elixir
-Telemetry.attach("log-response-handler", [:web, :request, :done], &LogResponseHandler.handle_event/4, nil)
+:telemetry.attach("log-response-handler", [:web, :request, :done], &LogResponseHandler.handle_event/4, nil)
 ```
 
 ```erlang
@@ -47,7 +47,7 @@ telemetry:attach(<<"log-response-handler">>, [web, request, done], fun log_respo
 Finally, in your application code you would run:
 
 ```elixir
-Telemetry.execute([:web, :request, :done], latency, %{request_path: path, status_code: status})
+:telemetry.execute([:web, :request, :done], latency, %{request_path: path, status_code: status})
 ```
 
 ```erlang
