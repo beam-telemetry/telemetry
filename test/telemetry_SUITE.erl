@@ -85,7 +85,7 @@ list_handlers(Config) ->
     HandlerFun = fun ?MODULE:echo_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, EventConfig),
 
-    ?assertMatch([#{handler_id := HandlerId,
+    ?assertMatch([#{id := HandlerId,
                     event_name := Event,
                     function := HandlerFun,
                     config := EventConfig}],
@@ -102,7 +102,7 @@ list_for_prefix(Config) ->
     HandlerFun = fun ?MODULE:echo_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, EventConfig),
 
-    [?assertMatch([#{handler_id := HandlerId,
+    [?assertMatch([#{id := HandlerId,
                      event_name := Event,
                      function := HandlerFun,
                      config := EventConfig}],
@@ -117,7 +117,7 @@ detach_on_exception(Config) ->
     HandlerFun = fun ?MODULE:raise_on_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, []),
 
-    ?assertMatch([#{handler_id := HandlerId,
+    ?assertMatch([#{id := HandlerId,
                     event_name := Event,
                     function := HandlerFun,
                     config := []}],
@@ -249,7 +249,7 @@ list_handler_on_many(Config) ->
     telemetry:attach_many(HandlerId, [Event1, Event2, Event3], HandlerFun, EventConfig),
 
     lists:foreach(fun(Event) ->
-                          ?assertMatch([#{handler_id := HandlerId,
+                          ?assertMatch([#{id := HandlerId,
                                           event_name := Event,
                                           function := HandlerFun,
                                           config := EventConfig}],

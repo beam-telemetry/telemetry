@@ -58,10 +58,10 @@ init([]) ->
     {ok, #state{tid=Tid}}.
 
 handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
-    case ets:match(?MODULE, #handler{handler_id=HandlerId,
+    case ets:match(?MODULE, #handler{id=HandlerId,
                                      _='_'}) of
         [] ->
-            Objects = [#handler{handler_id=HandlerId,
+            Objects = [#handler{id=HandlerId,
                                 event_name=EventName,
                                 function=Function,
                                 config=Config} || EventName <- EventNames],
@@ -71,7 +71,7 @@ handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
             {reply, {error, already_exists}, State}
     end;
 handle_call({delete, HandlerId}, _From, State) ->
-    case ets:select_delete(?MODULE, [{#handler{handler_id=HandlerId,
+    case ets:select_delete(?MODULE, [{#handler{id=HandlerId,
                                               _='_'}, [], [true]}]) of
         0 ->
             {reply, {error, not_found}, State};
