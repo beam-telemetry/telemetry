@@ -59,3 +59,7 @@ workflows:
           name: "otp-19"
           version: "19"
           pkg_install_cmd: "apt-get update && apt-get install"
+      - telemetry/build_and_test:
+          name: "otp-18"
+          version: "18"
+          pkg_install_cmd: "apt-get update && apt-get install"

@@ -29,10 +29,12 @@
 -type event_prefix() :: [atom()].
 -type config() :: term().
 -type handler_function() :: fun((event_name(), event_value(), event_metadata(), term()) -> ok).
--type handler() :: #{id := handler_id(),
-                     event_name := event_name(),
-                     function := handler_function(),
-                     config := config()}.
+
+%% TODO: change to := when OTP-18 support can be dropped
+-type handler() :: #{id => handler_id(),
+                     event_name => event_name(),
+                     function => handler_function(),
+                     config => config()}.
 
 -export_type([handler_id/0,
               event_name/0,
