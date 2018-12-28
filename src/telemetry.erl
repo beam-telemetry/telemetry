@@ -65,13 +65,13 @@ attach(HandlerId, EventName, Function, Config) ->
       Config :: config().
 attach_many(HandlerId, EventNames, Function, Config) ->
     assert_event_names_or_prefixes(EventNames),
-    telemetry_table_handler:insert(HandlerId, EventNames, Function, Config).
+    telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
 
 %% @doc Removes the existing handler.
 %% If the handler with given ID doesn't exist, `{:error, :not_found}' is returned.
 -spec detach(handler_id()) -> ok | {error, not_found}.
 detach(HandlerId) ->
-    telemetry_table_handler:delete(HandlerId).
+    telemetry_handler_table:delete(HandlerId).
 
 %% @doc Emits the event, invoking handlers attached to it.
 %% When the event is emitted, `module:function` provided to `attach/4' is called with four arguments:
@@ -94,7 +94,7 @@ execute(EventName, EventValue) ->
       EventMetadata :: event_metadata().
 execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
                                                    is_map(EventMetadata) ->
-    Handlers = telemetry_table_handler:list_for_event(EventName),
+    Handlers = telemetry_handler_table:list_for_event(EventName),
     ApplyFun =
         fun(#handler{id=HandlerId,
                      function=HandlerFunction,
@@ -126,7 +126,7 @@ list_handlers(EventPrefix) ->
        config => Config} || #handler{id=HandlerId,
                                      event_name=EventName,
                                      function=Function,
-                                     config=Config} <- telemetry_table_handler:list_by_prefix(EventPrefix)].
+                                     config=Config} <- telemetry_handler_table:list_by_prefix(EventPrefix)].
 
 %%
 

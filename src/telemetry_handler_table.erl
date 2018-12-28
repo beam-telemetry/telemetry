@@ -8,7 +8,7 @@
 %% Reads (`list_handlers_...') are executed by the calling process.
 %% @end
 %%%-------------------------------------------------------------------
--module(telemetry_table_handler).
+-module(telemetry_handler_table).
 
 -behaviour(gen_server).
 

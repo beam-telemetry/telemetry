@@ -14,10 +14,10 @@ init([]) ->
     SupFlags = #{strategy => one_for_one,
                  intensity => 1,
                  period => 5},
-    TableHandler = #{id => telemetry_table_handler,
-                     start => {telemetry_table_handler, start_link, []},
+    TableHandler = #{id => telemetry_handler_table,
+                     start => {telemetry_handler_table, start_link, []},
                      restart => permanent,
                      shutdown => 5000,
                      type => worker,
-                     modules => [telemetry_table_handler]},
+                     modules => [telemetry_handler_table]},
     {ok, {SupFlags, [TableHandler]}}.
