@@ -27,8 +27,6 @@
 
 -include("telemetry.hrl").
 
--record(state, {tid :: ets:tid()}).
-
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
@@ -54,8 +52,8 @@ list_by_prefix(EventPrefix) ->
     ets:match_object(?MODULE, Pattern).
 
 init([]) ->
-    Tid = create_table(),
-    {ok, #state{tid=Tid}}.
+    _ = create_table(),
+    {ok, []}.
 
 handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
     case ets:match(?MODULE, #handler{id=HandlerId,
