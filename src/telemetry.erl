@@ -47,8 +47,8 @@
 %% `{error, already_exists}' tuple is returned.
 %% See `execute/3' to learn how the handlers are invoked.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
-      HandlerId :: telemetry:handler_id(),
-      EventName :: telemetry:event_name(),
+      HandlerId :: handler_id(),
+      EventName :: event_name(),
       Function :: handler_function(),
       Config :: config().
 attach(HandlerId, EventName, Function, Config) ->
@@ -59,8 +59,8 @@ attach(HandlerId, EventName, Function, Config) ->
 %% that failure of the handler on any of these invokations will detach it from all the events in
 %% `event_name' (the same applies to manual detaching using `detach/1').
 -spec attach_many(HandlerId, [EventName], Function, Config) -> ok | {error, already_exists} when
-      HandlerId :: telemetry:handler_id(),
-      EventName :: telemetry:event_name(),
+      HandlerId :: handler_id(),
+      EventName :: event_name(),
       Function :: handler_function(),
       Config :: config().
 attach_many(HandlerId, EventNames, Function, Config) ->
