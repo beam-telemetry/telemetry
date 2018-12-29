@@ -1,3 +1,4 @@
+%% @private
 -module(telemetry_app).
 
 -behaviour(application).
