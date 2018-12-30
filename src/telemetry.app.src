@@ -1,6 +1,6 @@
 {application, telemetry,
  [{description, "Dynamic dispatching library for metrics and instrumentations"},
-  {vsn, "git"},
+  {vsn, "0.3.0"},
   {registered, []},
   {mod, {telemetry_app, []}},
   {applications,
@@ -10,7 +10,7 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
+  {maintainers, ["José Valim", "Arkadiusz Gil"]},
   {licenses, ["Apache 2.0"]},
   {links, [{"Github", "https://github.com/beam-telemetry/telemetry"}]}
  ]}.
