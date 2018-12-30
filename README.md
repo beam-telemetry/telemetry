@@ -1,6 +1,6 @@
 # Telemetry
 
-[Documentation](https://hexdocs.pm/telemetry/0.2.0)
+[Documentation](https://hexdocs.pm/telemetry/)
 
 Telemetry is a dynamic dispatching library for metrics and instrumentations. It is lightweight,
 small and can be used in any Erlang or Elixir project.
@@ -11,7 +11,23 @@ composed of a numeric value and can have metadata attached to it. Let's see an e
 
 Imagine that you have a web application and you'd like to log latency and response status for each
 incoming request. With Telemetry, you can build a module which does exactly that whenever a response
-is sent:
+is sent. The first step is to execute a measurement.
+
+In Elixir:
+
+```elixir
+:telemetry.execute([:web, :request, :done], latency, %{request_path: path, status_code: status})
+```
+
+In Erlang:
+
+```erlang
+telemetry:execute([web, request, done], Latency, #{request_path => Path, status_code => Status})
+```
+
+Then you can create a module to be invoked whenever the event happens.
+
+In Elixir:
 
 ```elixir
 defmodule LogResponseHandler do
@@ -22,6 +38,8 @@ defmodule LogResponseHandler do
   end
 end
 ```
+
+In Erlang:
 
 ```erlang
 -module(log_response_handler).
@@ -34,24 +52,18 @@ handle_event([web, request, done], Latency, #{path := Path,
   
 ```
 
-and attach this module to the `[:web, :request, :done]` event:
+Finally, all you need to do is to attach the module to the executed event.
+
+In Elixir:
 
 ```elixir
 :telemetry.attach("log-response-handler", [:web, :request, :done], &LogResponseHandler.handle_event/4, nil)
 ```
 
+In Erlang:
+
 ```erlang
 telemetry:attach(<<"log-response-handler">>, [web, request, done], fun log_response_handler:handle_event/4, [])
-```
-
-Finally, in your application code you would run:
-
-```elixir
-:telemetry.execute([:web, :request, :done], latency, %{request_path: path, status_code: status})
-```
-
-```erlang
-telemetry:execute([web, request, done], Latency, #{request_path => Path, status_code => Status})
 ```
 
 You might think that it isn't very useful, because you could just as well write a log statement
