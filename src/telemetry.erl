@@ -1,7 +1,9 @@
 %%%-------------------------------------------------------------------
 %% @doc `telemetry' allows you to invoke certain functions whenever a
-%% particular event is emitted. For more information see the
-%% documentation for `attach/4', `attach_many/4' and `execute/3'.
+%% particular event is emitted.
+%%
+%% For more information see the documentation for {@link attach/4}, {@link attach_many/4}
+%% and {@link execute/3}.
 %% @end
 %%%-------------------------------------------------------------------
 -module(telemetry).
