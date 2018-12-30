@@ -34,7 +34,7 @@ start_link() ->
       HandlerId :: telemetry:handler_id(),
       EventNames :: [telemetry:event_name()],
       Function :: telemetry:handler_function(),
-      Config :: term().
+      Config :: telemetry:handler_config().
 insert(HandlerId, EventNames, Function, Config) ->
     gen_server:call(?MODULE, {insert, HandlerId, EventNames, Function, Config}).
 

@@ -27,14 +27,14 @@
 -type event_value() :: number().
 -type event_metadata() :: map().
 -type event_prefix() :: [atom()].
--type config() :: term().
--type handler_function() :: fun((event_name(), event_value(), event_metadata(), term()) -> ok).
+-type handler_config() :: term().
+-type handler_function() :: fun((event_name(), event_value(), event_metadata(), handler_config()) -> ok).
 
 %% TODO: change to := when OTP-18 support can be dropped
 -type handler() :: #{id => handler_id(),
                      event_name => event_name(),
                      function => handler_function(),
-                     config => config()}.
+                     config => handler_config()}.
 
 -export_type([handler_id/0,
               event_name/0,
@@ -50,7 +50,7 @@
       HandlerId :: handler_id(),
       EventName :: event_name(),
       Function :: handler_function(),
-      Config :: config().
+      Config :: handler_config().
 attach(HandlerId, EventName, Function, Config) ->
     attach_many(HandlerId, [EventName], Function, Config).
 
@@ -62,7 +62,7 @@ attach(HandlerId, EventName, Function, Config) ->
       HandlerId :: handler_id(),
       EventName :: event_name(),
       Function :: handler_function(),
-      Config :: config().
+      Config :: handler_config().
 attach_many(HandlerId, EventNames, Function, Config) ->
     assert_event_names_or_prefixes(EventNames),
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
