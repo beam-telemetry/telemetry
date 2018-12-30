@@ -10,7 +10,7 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
+  {maintainers, ["José Valim", "Arkadiusz Gil"]},
   {licenses, ["Apache 2.0"]},
   {links, [{"Github", "https://github.com/beam-telemetry/telemetry"}]}
  ]}.
