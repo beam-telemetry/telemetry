@@ -1,7 +1,9 @@
 %%%-------------------------------------------------------------------
 %% @doc `telemetry' allows you to invoke certain functions whenever a
-%% particular event is emitted. For more information see the
-%% documentation for `attach/4', `attach_many/4' and `execute/3'.
+%% particular event is emitted.
+%%
+%% For more information see the documentation for {@link attach/4}, {@link attach_many/4}
+%% and {@link execute/3}.
 %% @end
 %%%-------------------------------------------------------------------
 -module(telemetry).
@@ -43,9 +45,10 @@
               event_prefix/0]).
 
 %% @doc Attaches the handler to the event.
+%%
 %% `handler_id' must be unique, if another handler with the same ID already exists the
 %% `{error, already_exists}' tuple is returned.
-%% See `execute/3' to learn how the handlers are invoked.
+%% See {@link execute/3} to learn how the handlers are invoked.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
@@ -55,9 +58,10 @@ attach(HandlerId, EventName, Function, Config) ->
     attach_many(HandlerId, [EventName], Function, Config).
 
 %% @doc Attaches the handler to many events.
+%%
 %% The handler will be invoked whenever any of the events in the `event_names' list is emitted. Note
 %% that failure of the handler on any of these invokations will detach it from all the events in
-%% `event_name' (the same applies to manual detaching using `detach/1').
+%% `event_name' (the same applies to manual detaching using {@link detach/1}).
 -spec attach_many(HandlerId, [EventName], Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
@@ -68,26 +72,32 @@ attach_many(HandlerId, EventNames, Function, Config) ->
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
 
 %% @doc Removes the existing handler.
-%% If the handler with given ID doesn't exist, `{:error, :not_found}' is returned.
+%%
+%% If the handler with given ID doesn't exist, `{error, not_found}' is returned.
 -spec detach(handler_id()) -> ok | {error, not_found}.
 detach(HandlerId) ->
     telemetry_handler_table:delete(HandlerId).
 
-%% @doc Emits the event, invoking handlers attached to it.
-%% When the event is emitted, `module:function` provided to `attach/4' is called with four arguments:
-%% * the event name
-%% * the event value
-%% * the event metadata
-%% * the handler configuration given to `attach/4'
-%% All the handlers are executed by the process calling this function. If the function fails (raises,
-%% exits or throws) then the handler is removed.
-%% Note that you should not rely on the order in which handlers are invoked.
+%% @equiv execute(EventName, EventValue, #{})
 -spec execute(EventName, EventValue) -> ok when
       EventName :: event_name(),
       EventValue :: event_value().
 execute(EventName, EventValue) ->
     execute(EventName, EventValue, #{}).
 
+%% @doc Emits the event, invoking handlers attached to it.
+%%
+%% When the event is emitted, the handler function provided to {@link attach/4} is called with four
+%% arguments:
+%% <ul>
+%% <li>the event name</li>
+%% <li>the event value</li>
+%% <li>the event metadata</li>
+%% <li>the handler configuration given to {@link attach/4}</li>
+%% </ul>
+%% All the handlers are executed by the process calling this function. If the function fails (raises,
+%% exits or throws) then the handler is removed.
+%% Note that you should not rely on the order in which handlers are invoked.
 -spec execute(EventName, EventValue, EventMetadata) -> ok when
       EventName :: event_name(),
       EventValue :: event_value(),
@@ -114,6 +124,7 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
 
 
 %% @doc Returns all handlers attached to events with given prefix.
+%%
 %% Handlers attached to many events at once using `attach_many/4' will be listed once for each
 %% event they're attached to.
 %% Note that you can list all handlers by feeding this function an empty list.
