@@ -43,7 +43,6 @@ orbs:
                 #       pip install codecov && codecov -f _build/test/covertool/telemetry.covertool.xml
 
 workflows:
-  version: 2.1
   build_and_test:
     jobs:
       - telemetry/build_and_test:
