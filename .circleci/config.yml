@@ -46,11 +46,8 @@ workflows:
   build_and_test:
     jobs:
       - telemetry/build_and_test:
-          name: "otp-21.2"
-          version: "21.2-alpine"
-      - telemetry/build_and_test:
-          name: "otp-21.1"
-          version: "21.1-alpine"
+          name: "otp-21"
+          version: "21-alpine"
       - telemetry/build_and_test:
           name: "otp-20"
           version: "20-alpine"
