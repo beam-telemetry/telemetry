@@ -1,5 +1,8 @@
 # Telemetry
 
+[![CircleCI](https://circleci.com/gh/beam-telemetry/telemetry.svg?style=svg)](https://circleci.com/gh/beam-telemetry/telemetry)
+[![Codecov](https://codecov.io/gh/beam-telemetry/telemetry/branch/master/graphs/badge.svg)](https://codecov.io/gh/beam-telemetry/telemetry/branch/master/graphs/badge.svg)
+
 [Documentation](https://hexdocs.pm/telemetry/)
 
 Telemetry is a dynamic dispatching library for metrics and instrumentations. It is lightweight,
@@ -49,7 +52,7 @@ In Erlang:
 handle_event([web, request, done], Latency, #{path := Path,
                                               status_code := Status}, _Config) ->
   ?LOG_INFO("[~s] ~p sent in ~p", [Path, Status, Latency]).
-  
+
 ```
 
 Finally, all you need to do is to attach the module to the executed event.
