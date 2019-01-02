@@ -41,8 +41,8 @@ orbs:
                 - rebar3/cover
                 - run: rebar3 as test covertool generate
                 - run:
-                    name: Install bash
-                    command: <<parameters.pkg_install_cmd>> bash
+                    name: Install bash and curl
+                    command: <<parameters.pkg_install_cmd>> bash curl
                 - run:
                     name: Upload coverage report
                     shell: /bin/bash
