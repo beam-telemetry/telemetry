@@ -15,9 +15,9 @@ orbs:
           pkg_install_cmd:
             type: string
             default: apk add --no-cache
-          coverage:
+          codecov_flag:
+            description: A string the coverage reports are grouped by
             type: string
-            default: \"\"
         executor:
           name: rebar3/erlang
           version: <<parameters.version>>
@@ -42,11 +42,11 @@ orbs:
                 - rebar3/cover
                 - run: rebar3 as test covertool generate
                 - run:
-                    name: Install curl
-                    command: <<parameters.pkg_install_cmd>> curl
+                    name: Install bash
+                    command: <<parameters.pkg_install_cmd>> bash
                 - codecov/upload:
                     file: _build/test/covertool/telemetry.covertool.xml
-                    flags: '${CIRCLE_JOB},'
+                    flags: <<parameters.codecov_flag>>
 
 workflows:
   build_and_test:
@@ -54,14 +54,18 @@ workflows:
       - telemetry/build_and_test:
           name: "otp-21"
           version: "21-alpine"
+          codecov_flag: "otp21"
       - telemetry/build_and_test:
           name: "otp-20"
           version: "20-alpine"
+          codecov_flag: "otp20"
       - telemetry/build_and_test:
           name: "otp-19"
           version: "19"
+          codecov_flag: "otp19"
           pkg_install_cmd: "apt-get update && apt-get install"
       - telemetry/build_and_test:
           name: "otp-18"
           version: "18"
+          codecov_flag: "otp18"
           pkg_install_cmd: "apt-get update && apt-get install"
