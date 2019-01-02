@@ -4,6 +4,7 @@ orbs:
   telemetry:
     orbs:
       rebar3: tsloughter/rebar3@0.5.5
+      codecov: codecov/codecov@1.0.2
 
     jobs:
       build_and_test:
@@ -36,11 +37,9 @@ orbs:
                     destination: common_test
 
                 - rebar3/cover
-                # - run:
-                #     command: |
-                #       rebar3 covertool generate
-                #       apk add --update python python-dev py-pip git
-                #       pip install codecov && codecov -f _build/test/covertool/telemetry.covertool.xml
+                - run: rebar3 as test covertool generate
+                - codecov/upload:
+                    file: _build/test/covertool/telemetry.covertool.xml
 
 workflows:
   build_and_test:
