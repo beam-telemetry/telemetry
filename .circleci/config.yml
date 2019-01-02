@@ -4,7 +4,6 @@ orbs:
   telemetry:
     orbs:
       rebar3: tsloughter/rebar3@0.5.5
-      codecov: codecov/codecov@1.0.2
 
     jobs:
       build_and_test:
@@ -15,8 +14,8 @@ orbs:
           pkg_install_cmd:
             type: string
             default: apk add --no-cache
-          codecov_flag:
-            description: A string the coverage reports are grouped by
+          codecov_flags:
+            description: Comma-separated strings the coverage reports are grouped by
             type: string
         executor:
           name: rebar3/erlang
@@ -44,9 +43,13 @@ orbs:
                 - run:
                     name: Install bash
                     command: <<parameters.pkg_install_cmd>> bash
-                - codecov/upload:
-                    file: _build/test/covertool/telemetry.covertool.xml
-                    flags: <<parameters.codecov_flag>>
+                - run:
+                    name: Upload coverage report
+                    shell: /bin/bash
+                    command: |
+                      bash <(curl -s https://codecov.io/bash) \
+                        -f  _build/test/covertool/telemetry.covertool.xml \
+                        -F << parameters.codecov_flags >>
 
 workflows:
   build_and_test:
@@ -54,18 +57,18 @@ workflows:
       - telemetry/build_and_test:
           name: "otp-21"
           version: "21-alpine"
-          codecov_flag: "otp21"
+          codecov_flags: "otp21"
       - telemetry/build_and_test:
           name: "otp-20"
           version: "20-alpine"
-          codecov_flag: "otp20"
+          codecov_flags: "otp20"
       - telemetry/build_and_test:
           name: "otp-19"
           version: "19"
-          codecov_flag: "otp19"
+          codecov_flags: "otp19"
           pkg_install_cmd: "apt-get update && apt-get install"
       - telemetry/build_and_test:
           name: "otp-18"
           version: "18"
-          codecov_flag: "otp18"
+          codecov_flags: "otp18"
           pkg_install_cmd: "apt-get update && apt-get install"
