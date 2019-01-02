@@ -14,6 +14,9 @@ orbs:
           pkg_install_cmd:
             type: string
             default: apk add --no-cache
+          codecov_flag:
+            description: String the coverage reports are grouped by
+            type: string
         executor:
           name: rebar3/erlang
           version: <<parameters.version>>
@@ -36,11 +39,17 @@ orbs:
                     destination: common_test
 
                 - rebar3/cover
-                # - run:
-                #     command: |
-                #       rebar3 covertool generate
-                #       apk add --update python python-dev py-pip git
-                #       pip install codecov && codecov -f _build/test/covertool/telemetry.covertool.xml
+                - run: rebar3 as test covertool generate
+                - run:
+                    name: Install bash and curl
+                    command: <<parameters.pkg_install_cmd>> bash curl
+                - run:
+                    name: Upload coverage report
+                    shell: /bin/bash
+                    command: |
+                      bash <(curl -s https://codecov.io/bash) \
+                        -f  _build/test/covertool/telemetry.covertool.xml \
+                        -F <<parameters.codecov_flag>>
 
 workflows:
   build_and_test:
@@ -48,14 +57,18 @@ workflows:
       - telemetry/build_and_test:
           name: "otp-21"
           version: "21-alpine"
+          codecov_flag: "otp21"
       - telemetry/build_and_test:
           name: "otp-20"
           version: "20-alpine"
+          codecov_flag: "otp20"
       - telemetry/build_and_test:
           name: "otp-19"
           version: "19"
+          codecov_flag: "otp19"
           pkg_install_cmd: "apt-get update && apt-get install"
       - telemetry/build_and_test:
           name: "otp-18"
           version: "18"
+          codecov_flag: "otp18"
           pkg_install_cmd: "apt-get update && apt-get install"
