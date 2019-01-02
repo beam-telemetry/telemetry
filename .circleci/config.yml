@@ -15,6 +15,9 @@ orbs:
           pkg_install_cmd:
             type: string
             default: apk add --no-cache
+          coverage:
+            type: string
+            default: \"\"
         executor:
           name: rebar3/erlang
           version: <<parameters.version>>
@@ -38,8 +41,12 @@ orbs:
 
                 - rebar3/cover
                 - run: rebar3 as test covertool generate
+                - run:
+                    name: Install curl
+                    command: <<parameters.pkg_install_cmd>> curl
                 - codecov/upload:
                     file: _build/test/covertool/telemetry.covertool.xml
+                    flags: '${CIRCLE_JOB},'
 
 workflows:
   build_and_test:
