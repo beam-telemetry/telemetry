@@ -25,7 +25,7 @@
 
 
 -type handler_id() :: term().
--type event_name() :: [atom()].
+-type event_name() :: [atom(), ...].
 -type event_value() :: number().
 -type event_metadata() :: map().
 -type event_prefix() :: [atom()].
@@ -68,7 +68,7 @@ attach(HandlerId, EventName, Function, Config) ->
       Function :: handler_function(),
       Config :: handler_config().
 attach_many(HandlerId, EventNames, Function, Config) ->
-    assert_event_names_or_prefixes(EventNames),
+    assert_event_names(EventNames),
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
 
 %% @doc Removes the existing handler.
@@ -130,7 +130,7 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
 %% Note that you can list all handlers by feeding this function an empty list.
 -spec list_handlers(event_prefix()) -> [handler()].
 list_handlers(EventPrefix) ->
-    assert_event_name_or_prefix(EventPrefix),
+    assert_event_prefix(EventPrefix),
     [#{id => HandlerId,
        event_name => EventName,
        function => Function,
@@ -141,17 +141,30 @@ list_handlers(EventPrefix) ->
 
 %%
 
--spec assert_event_names_or_prefixes(term()) -> [ok].
-assert_event_names_or_prefixes(List) when is_list(List) ->
-    [assert_event_name_or_prefix(E) || E <- List].
+-spec assert_event_names(term()) -> [ok].
+assert_event_names(List) when is_list(List) ->
+    [assert_event_name(E) || E <- List];
+assert_event_names(Term) ->
+    erlang:error(badarg, Term).
 
--spec assert_event_name_or_prefix(term()) -> ok.
-assert_event_name_or_prefix(List) when is_list(List) ->
+-spec assert_event_prefix(term()) -> ok.
+assert_event_prefix(List) when is_list(List) ->
     case lists:all(fun erlang:is_atom/1, List) of
         true ->
             ok;
         false ->
             erlang:error(badarg, List)
     end;
-assert_event_name_or_prefix(List) ->
+assert_event_prefix(List) ->
     erlang:error(badarg, List).
+
+-spec assert_event_name(term()) -> ok.
+assert_event_name([_ | _] = List) ->
+    case lists:all(fun erlang:is_atom/1, List) of
+        true ->
+            ok;
+        false ->
+            erlang:error(badarg, List)
+    end;
+assert_event_name(Term) ->
+    erlang:error(badarg, Term).

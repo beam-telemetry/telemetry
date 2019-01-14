@@ -30,7 +30,8 @@ end_per_testcase(_, Config) ->
 bad_event_names(Config) ->
     HandlerId = ?config(id, Config),
     ?assertError(badarg, telemetry:attach(HandlerId, ["some", event], fun ?MODULE:echo_event/4, [])),
-    ?assertError(badarg, telemetry:attach(HandlerId, hello, fun ?MODULE:echo_event/4, [])).
+    ?assertError(badarg, telemetry:attach(HandlerId, hello, fun ?MODULE:echo_event/4, [])),
+    ?assertError(badarg, telemetry:attach(HandlerId, [], fun ?MODULE:echo_event/4, [])).
 
 %% attaching returns error if handler with the same ID already exist
 duplicate_attach(Config) ->
