@@ -32,12 +32,12 @@
 
 -type handler_id() :: term().
 -type event_name() :: [atom(), ...].
+-type event_measurements() :: map().
+-type event_metadata() :: map().
 -type event_value() :: number().
--type event_data() :: map().
 -type event_prefix() :: [atom()].
 -type handler_config() :: term().
--type handler_function() :: fun((event_name(), event_data(), handler_config()) -> any())
-                          | fun((event_name(), event_value(), event_data(), handler_config()) -> any()).
+-type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
 
 %% TODO: change to := when OTP-18 support can be dropped
 -type handler() :: #{id => handler_id(),
@@ -47,11 +47,13 @@
 
 -export_type([handler_id/0,
               event_name/0,
-              event_data/0,
+              event_measurements/0,
+              event_metadata/0,
               event_value/0,
               event_prefix/0,
               handler_config/0,
-              handler_function/0]).
+              handler_function/0,
+              handler/0]).
 
 %% @doc Attaches the handler to the event.
 %%
@@ -77,13 +79,6 @@ attach(HandlerId, EventName, Function, Config) ->
       Function :: handler_function(),
       Config :: handler_config().
 attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 4) ->
-    ?LOG_WARNING("Using 4-argument handler function is deprecated. "
-                 "Please provide 3-argument handler function instead."),
-    Wrapper = fun(EventName, EventData, HandlerConfig) ->
-                  Function(EventName, maps:get(value, EventData, 0), EventData, HandlerConfig)
-              end,
-    attach_many(HandlerId, EventNames, Wrapper, Config);
-attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 3) ->
     assert_event_names(EventNames),
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
 
@@ -100,29 +95,29 @@ detach(HandlerId) ->
 %% arguments:
 %% <ul>
 %% <li>the event name</li>
-%% <li>the event data</li>
+%% <li>the map of measurements</li>
+%% <li>the map of event metadata</li>
 %% <li>the handler configuration given to {@link attach/4}</li>
 %% </ul>
 %% All the handlers are executed by the process calling this function. If the function fails (raises,
 %% exits or throws) then the handler is removed.
 %% Note that you should not rely on the order in which handlers are invoked.
-%%
-%% <h4>Note on backward compatibility</h4>
-%%
-%% If deprecated 4-argument handler function is attached to the event, it's invoked with the
-%% following arguments:
-%% <pre>HandlerFun(EventName, maps:get(value, EventData, 0), EventData, HandlerConfig)</pre>
--spec execute(EventName, EventData) -> ok when
+-spec execute(EventName, Measurements, Metadata) -> ok when
       EventName :: event_name(),
-      EventData :: event_data().
-execute(EventName, EventData) when is_map(EventData) ->
+      Measurements :: event_measurements() | event_value(),
+      Metadata :: event_metadata().
+execute(EventName, Value, Metadata) when is_number(Value) ->
+    ?LOG_WARNING("Using execute/3 with a single event value is deprecated. "
+                 "Use a measurement map instead.", []),
+    execute(EventName, #{value => Value}, Metadata);
+execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(Metadata) ->
     Handlers = telemetry_handler_table:list_for_event(EventName),
     ApplyFun =
         fun(#handler{id=HandlerId,
                      function=HandlerFunction,
                      config=Config}) ->
             try
-                HandlerFunction(EventName, EventData, Config)
+                HandlerFunction(EventName, Measurements, Metadata, Config)
             catch
                 ?WITH_STACKTRACE(Class, Reason, Stacktrace)
                     detach(HandlerId),
@@ -131,18 +126,14 @@ execute(EventName, EventData) when is_map(EventData) ->
                                [HandlerId, Class, Reason, Stacktrace])
             end
         end,
-
     lists:foreach(ApplyFun, Handlers).
 
-%% @deprecated Deprecated in favour of {@link execute/2}.
-%% @equiv execute(EventName, maps:put(value, EventValue, EventData))
--spec execute(EventName, EventValue, EventData) -> ok when
+%% @equiv telemetry:execute(EventName, Measurements, #{})
+-spec execute(EventName, Measurements) -> ok when
       EventName :: event_name(),
-      EventValue :: event_value(),
-      EventData :: event_data().
-execute(EventName, EventValue, EventData) when is_number(EventValue), is_map(EventData) ->
-    ?LOG_WARNING("Using execute/3 is deprecated. Please use execute/2 instead.", []),
-    execute(EventName, maps:put(value, EventValue, EventData)).
+      Measurements :: event_measurements() | event_value().
+execute(EventName, Measurements) ->
+    execute(EventName, Measurements, #{}).
 
 %% @doc Returns all handlers attached to events with given prefix.
 %%

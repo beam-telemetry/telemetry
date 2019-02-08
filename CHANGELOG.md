@@ -7,29 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
-The event value has been removed. Now event payload is an arbitrary map. There are two reasons for
-this change:
-
-* It invalidates the notion of some specific property of the event being special;
-* It is up to the consumer of the event to decide what part of the payload is important - the event
-  only indicates that *a thing*  happened.
-
-The `execute/2` API should be now used instead of `execute/3` (previous `execute/2` which set
-metadata as empty map has been removed, this is the only backward-incompatible change). This change
-also means that a handler function now has only three argument (a four-argument version is still
-valid but is deprecated).
+A single event value has been replaced by a map of measurements. Now it is up to the consumer of the
+event to decide what part of the payload is important. This is useful in cases where event indicates
+that a thing happened but there are many properties describing it. For example, a database query
+event may include total time, decode time, wait time and other measurements.
 
 ### Changed
 
-* `execute/2` now accepts an event name and a map of event data;
-* Handler functions have only 3 arguments now.
+* `execute/3` now accepts a map of measurements instead of event value
 
 ### Deprecated
 
-* `:telemetry.execute/3` in favour of `:telemetry.execute/2`. If `execute/3` is used, the event
-  value is merged into metadata map under `:value` key and provided as event data to `execute/2`.
-* 4-argument handler functions. If a 4-argument handler function is invoked, the event value is
-  extracted from event data map from `:value` key, defaulting to `0`.
+* `:telemetry.execute/3` with an event value in favour of `:telemetry.execute/3` with a map of
+  measurements. If the event value is provided, it is put in a map under a `:value` key and provided
+  as measurements to a handler function.
 
 ## [0.3.0](https://github.com/elixir-telemetry/telemetry/tree/v0.3.0)
 
