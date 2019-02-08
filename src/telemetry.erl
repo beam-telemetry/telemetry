@@ -59,7 +59,7 @@
 %%
 %% `handler_id' must be unique, if another handler with the same ID already exists the
 %% `{error, already_exists}' tuple is returned.
-%% See {@link execute/2} to learn how the handlers are invoked.
+%% See {@link execute/3} to learn how the handlers are invoked.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
