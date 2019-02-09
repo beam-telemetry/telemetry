@@ -19,13 +19,13 @@ is sent. The first step is to execute a measurement.
 In Elixir:
 
 ```elixir
-:telemetry.execute([:web, :request, :done], latency, %{request_path: path, status_code: status})
+:telemetry.execute([:web, :request, :done], %{latency: latency}, %{request_path: path, status_code: status})
 ```
 
 In Erlang:
 
 ```erlang
-telemetry:execute([web, request, done], Latency, #{request_path => Path, status_code => Status})
+telemetry:execute([web, request, done], #{latency => Latency}, #{request_path => Path, status_code => Status})
 ```
 
 Then you can create a module to be invoked whenever the event happens.
@@ -36,8 +36,8 @@ In Elixir:
 defmodule LogResponseHandler do
   require Logger
 
-  def handle_event([:web, :request, :done], latency, metadata, _config) do
-    Logger.info("[#{metadata.request_path}] #{metadata.status_code} sent in #{latency}")
+  def handle_event([:web, :request, :done], measurements, metadata, _config) do
+    Logger.info("[#{metadata.request_path}] #{metadata.status_code} sent in #{measurements.latency}")
   end
 end
 ```
@@ -49,8 +49,8 @@ In Erlang:
 
 -include_lib("kernel/include/logger.hrl")
 
-handle_event([web, request, done], Latency, #{path := Path,
-                                              status_code := Status}, _Config) ->
+handle_event([web, request, done], #{latency := Latency}, #{path := Path,
+                                                            status_code := Status}, _Config) ->
   ?LOG_INFO("[~s] ~p sent in ~p", [Path, Status, Latency]).
 
 ```
@@ -70,7 +70,7 @@ telemetry:attach(<<"log-response-handler">>, [web, request, done], fun log_respo
 ```
 
 You might think that it isn't very useful, because you could just as well write a log statement
-instead of `Telemetry.execute/2` call - and you would be right! But now imagine that each Elixir library
+instead of `Telemetry.execute/3` call - and you would be right! But now imagine that each Elixir library
 would publish its own set of events with information useful for introspection. Currently each library
 rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
 cases across whole ecosystem.

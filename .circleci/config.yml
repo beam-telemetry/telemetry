@@ -66,9 +66,9 @@ workflows:
           name: "otp-19"
           version: "19"
           codecov_flag: "otp19"
-          pkg_install_cmd: "apt-get update && apt-get install"
+          pkg_install_cmd: "apt-get update && apt-get install -y"
       - telemetry/build_and_test:
           name: "otp-18"
           version: "18"
           codecov_flag: "otp18"
-          pkg_install_cmd: "apt-get update && apt-get install"
+          pkg_install_cmd: "apt-get update && apt-get install -y"

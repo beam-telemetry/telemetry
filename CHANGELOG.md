@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [UNRELEASED]
+
+A single event value has been replaced by a map of measurements. Now it is up to the consumer of the
+event to decide what part of the payload is important. This is useful in cases where event indicates
+that a thing happened but there are many properties describing it. For example, a database query
+event may include total time, decode time, wait time and other measurements.
+
+### Changed
+
+* `execute/3` now accepts a map of measurements instead of event value
+
+### Deprecated
+
+* `:telemetry.execute/3` with an event value in favour of `:telemetry.execute/3` with a map of
+  measurements. If the event value is provided, it is put in a map under a `:value` key and provided
+  as measurements to a handler function.
+
 ## [0.3.0](https://github.com/elixir-telemetry/telemetry/tree/v0.3.0)
 
 This release marks the conversion from Elixir to Erlang. This is a breaking change, but the benefits

@@ -1,6 +1,6 @@
--record(handler, {id :: telemetry:handler_id(),
+-record(handler, {id :: telemetry:handler_id() | '_',
                   event_name :: telemetry:event_name() | '_',
-                  function   :: telemetry:handler_function(),
+                  function   :: telemetry:handler_function() | '_',
                   config     :: telemetry:handler_config() | '_'}).
 
 -ifdef('OTP_RELEASE').

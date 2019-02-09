@@ -3,7 +3,7 @@
 %% particular event is emitted.
 %%
 %% For more information see the documentation for {@link attach/4}, {@link attach_many/4}
-%% and {@link execute/3}.
+%% and {@link execute/2}.
 %% @end
 %%%-------------------------------------------------------------------
 -module(telemetry).
@@ -23,14 +23,21 @@
 -define(LOG_ERROR(Msg, Args), error_logger:error_msg(Msg, Args)).
 -endif.
 
+-ifdef('OTP_RELEASE').
+-include_lib("kernel/include/logger.hrl").
+-else.
+-define(LOG_WARNING(Msg, Args), error_logger:warning_msg(Msg, Args)).
+-endif.
+
 
 -type handler_id() :: term().
 -type event_name() :: [atom(), ...].
--type event_value() :: number().
+-type event_measurements() :: map().
 -type event_metadata() :: map().
+-type event_value() :: number().
 -type event_prefix() :: [atom()].
 -type handler_config() :: term().
--type handler_function() :: fun((event_name(), event_value(), event_metadata(), handler_config()) -> ok).
+-type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
 
 %% TODO: change to := when OTP-18 support can be dropped
 -type handler() :: #{id => handler_id(),
@@ -40,9 +47,13 @@
 
 -export_type([handler_id/0,
               event_name/0,
-              event_value/0,
+              event_measurements/0,
               event_metadata/0,
-              event_prefix/0]).
+              event_value/0,
+              event_prefix/0,
+              handler_config/0,
+              handler_function/0,
+              handler/0]).
 
 %% @doc Attaches the handler to the event.
 %%
@@ -67,7 +78,7 @@ attach(HandlerId, EventName, Function, Config) ->
       EventName :: event_name(),
       Function :: handler_function(),
       Config :: handler_config().
-attach_many(HandlerId, EventNames, Function, Config) ->
+attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 4) ->
     assert_event_names(EventNames),
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
 
@@ -78,39 +89,35 @@ attach_many(HandlerId, EventNames, Function, Config) ->
 detach(HandlerId) ->
     telemetry_handler_table:delete(HandlerId).
 
-%% @equiv execute(EventName, EventValue, #{})
--spec execute(EventName, EventValue) -> ok when
-      EventName :: event_name(),
-      EventValue :: event_value().
-execute(EventName, EventValue) ->
-    execute(EventName, EventValue, #{}).
-
 %% @doc Emits the event, invoking handlers attached to it.
 %%
 %% When the event is emitted, the handler function provided to {@link attach/4} is called with four
 %% arguments:
 %% <ul>
 %% <li>the event name</li>
-%% <li>the event value</li>
-%% <li>the event metadata</li>
+%% <li>the map of measurements</li>
+%% <li>the map of event metadata</li>
 %% <li>the handler configuration given to {@link attach/4}</li>
 %% </ul>
 %% All the handlers are executed by the process calling this function. If the function fails (raises,
 %% exits or throws) then the handler is removed.
 %% Note that you should not rely on the order in which handlers are invoked.
--spec execute(EventName, EventValue, EventMetadata) -> ok when
+-spec execute(EventName, Measurements, Metadata) -> ok when
       EventName :: event_name(),
-      EventValue :: event_value(),
-      EventMetadata :: event_metadata().
-execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
-                                                   is_map(EventMetadata) ->
+      Measurements :: event_measurements() | event_value(),
+      Metadata :: event_metadata().
+execute(EventName, Value, Metadata) when is_number(Value) ->
+    ?LOG_WARNING("Using execute/3 with a single event value is deprecated. "
+                 "Use a measurement map instead.", []),
+    execute(EventName, #{value => Value}, Metadata);
+execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(Metadata) ->
     Handlers = telemetry_handler_table:list_for_event(EventName),
     ApplyFun =
         fun(#handler{id=HandlerId,
                      function=HandlerFunction,
                      config=Config}) ->
             try
-                HandlerFunction(EventName, EventValue, EventMetadata, Config)
+                HandlerFunction(EventName, Measurements, Metadata, Config)
             catch
                 ?WITH_STACKTRACE(Class, Reason, Stacktrace)
                     detach(HandlerId),
@@ -119,9 +126,14 @@ execute(EventName, EventValue, EventMetadata) when is_number(EventValue) ,
                                [HandlerId, Class, Reason, Stacktrace])
             end
         end,
-
     lists:foreach(ApplyFun, Handlers).
 
+%% @equiv telemetry:execute(EventName, Measurements, #{})
+-spec execute(EventName, Measurements) -> ok when
+      EventName :: event_name(),
+      Measurements :: event_measurements() | event_value().
+execute(EventName, Measurements) ->
+    execute(EventName, Measurements, #{}).
 
 %% @doc Returns all handlers attached to events with given prefix.
 %%
