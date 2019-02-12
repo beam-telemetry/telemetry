@@ -83,7 +83,7 @@ your dependencies in `mix.exs`:
 ```elixir
 defp deps() do
   [
-    {:telemetry, "~> 0.3.0"}
+    {:telemetry, "~> 0.4.0"}
   ]
 end
 ```
