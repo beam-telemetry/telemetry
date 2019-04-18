@@ -91,7 +91,7 @@ end
 or `rebar.config`:
 
 ``` erlang
-{deps, [{telemetry, "~> 0.3.0"}]}.
+{deps, [{telemetry, "~> 0.4.0"}]}.
 ```
 
 ## Copyright and License
