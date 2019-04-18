@@ -1,5 +1,5 @@
 @copyright 2018 Chris McCord and Erlang Solutions
-@version 0.3.0
+@version 0.4.0
 @title Telemetry
 @doc Telemetry is a dynamic dispatching library for metrics and instrumentations.
 It is lightweight, small and can be used in any Erlang or Elixir project.
