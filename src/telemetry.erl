@@ -64,7 +64,7 @@
 %%
 %% <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
 %% function captures (i.e. `fun mod:fun/4' in Erlang or `&Mod.fun/4' in Elixir) as event handlers
-%% to achive maximum performance. In other words, avoid using literal anonymous functions
+%% to achieve maximum performance. In other words, avoid using literal anonymous functions
 %% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
 %% or `&handle_event/4' ) as event handlers.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
@@ -83,7 +83,7 @@ attach(HandlerId, EventName, Function, Config) ->
 %%
 %% <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
 %% function captures (i.e. `fun mod:fun/4' in Erlang or `&Mod.fun/4' in Elixir) as event handlers
-%% to achive maximum performance. In other words, avoid using literal anonymous functions
+%% to achieve maximum performance. In other words, avoid using literal anonymous functions
 %% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
 %% or `&handle_event/4' ) as event handlers.
 -spec attach_many(HandlerId, [EventName], Function, Config) -> ok | {error, already_exists} when
