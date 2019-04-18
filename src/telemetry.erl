@@ -59,7 +59,14 @@
 %%
 %% `handler_id' must be unique, if another handler with the same ID already exists the
 %% `{error, already_exists}' tuple is returned.
+%%
 %% See {@link execute/3} to learn how the handlers are invoked.
+%%
+%% <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
+%% function captures (i.e. `fun mod:fun/4' in Erlang or `&Mod.fun/4' in Elixir) as event handlers
+%% to achieve maximum performance. In other words, avoid using literal anonymous functions
+%% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
+%% or `&handle_event/4' ) as event handlers.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
@@ -73,6 +80,12 @@ attach(HandlerId, EventName, Function, Config) ->
 %% The handler will be invoked whenever any of the events in the `event_names' list is emitted. Note
 %% that failure of the handler on any of these invokations will detach it from all the events in
 %% `event_name' (the same applies to manual detaching using {@link detach/1}).
+%%
+%% <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
+%% function captures (i.e. `fun mod:fun/4' in Erlang or `&Mod.fun/4' in Elixir) as event handlers
+%% to achieve maximum performance. In other words, avoid using literal anonymous functions
+%% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
+%% or `&handle_event/4' ) as event handlers.
 -spec attach_many(HandlerId, [EventName], Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
