@@ -55,6 +55,10 @@ workflows:
   build_and_test:
     jobs:
       - telemetry/build_and_test:
+          name: "otp-22"
+          version: "22-alpine"
+          codecov_flag: "otp22"
+      - telemetry/build_and_test:
           name: "otp-21"
           version: "21-alpine"
           codecov_flag: "otp21"
