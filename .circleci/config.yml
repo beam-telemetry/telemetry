@@ -42,10 +42,14 @@ workflows:
   build_and_test:
     jobs:
       - telemetry/build_and_test:
+          name: "otp-21"
           version: "21"
       - telemetry/build_and_test:
+          name: "otp-20"
           version: "20"
       - telemetry/build_and_test:
+          name: "otp-19"
           version: "19"
       - telemetry/build_and_test:
+          name: "otp-18"
           version: "18"
