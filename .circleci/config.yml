@@ -4,15 +4,13 @@ orbs:
   telemetry:
     orbs:
       rebar3: tsloughter/rebar3@0.6.3
+      codecov: codecov/codecov@1.0.4
 
     jobs:
       build_and_test:
         parameters:
           version:
             description: The Erlang/OTP docker image tag to use.
-            type: string
-          codecov_flag:
-            description: String the coverage reports are grouped by
             type: string
         executor:
           name: rebar3/erlang
@@ -35,27 +33,19 @@ orbs:
 
                 - rebar3/cover
                 - run: rebar3 as test covertool generate
-                - run:
-                    name: Upload coverage report
-                    shell: /bin/bash
-                    command: |
-                      bash <(curl -s https://codecov.io/bash) \
-                        -f  _build/test/covertool/telemetry.covertool.xml \
-                        -F <<parameters.codecov_flag>>
+
+                - codecov/upload:
+                    file: _build/test/covertool/telemetry.covertool.xml
+                    flags: otp<<parameters.version>>
 
 workflows:
   build_and_test:
     jobs:
       - telemetry/build_and_test:
           version: "21"
-          codecov_flag: "otp21"
       - telemetry/build_and_test:
           version: "20"
-          codecov_flag: "otp20"
       - telemetry/build_and_test:
           version: "19"
-          codecov_flag: "otp19"
       - telemetry/build_and_test:
-          name: "otp-18"
           version: "18"
-          codecov_flag: "otp18"
