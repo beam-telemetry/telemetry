@@ -3,7 +3,7 @@ version: 2.1
 orbs:
   telemetry:
     orbs:
-      rebar3: tsloughter/rebar3@0.5.5
+      rebar3: tsloughter/rebar3@0.6.3
 
     jobs:
       build_and_test:
@@ -11,18 +11,13 @@ orbs:
           version:
             description: The Erlang/OTP docker image tag to use.
             type: string
-          pkg_install_cmd:
-            type: string
-            default: apk add --no-cache
           codecov_flag:
             description: String the coverage reports are grouped by
             type: string
         executor:
           name: rebar3/erlang
-          version: <<parameters.version>>
+          tag: <<parameters.version>>
         steps:
-          - rebar3/install_ca_certs:
-              pkg_install_cmd: <<parameters.pkg_install_cmd>>
           - checkout
           - rebar3/with_deps_cache:
               cache_key_postfix: -<<parameters.version>>
@@ -41,9 +36,6 @@ orbs:
                 - rebar3/cover
                 - run: rebar3 as test covertool generate
                 - run:
-                    name: Install bash and curl
-                    command: <<parameters.pkg_install_cmd>> bash curl
-                - run:
                     name: Upload coverage report
                     shell: /bin/bash
                     command: |
@@ -55,20 +47,15 @@ workflows:
   build_and_test:
     jobs:
       - telemetry/build_and_test:
-          name: "otp-21"
-          version: "21-alpine"
+          version: "21"
           codecov_flag: "otp21"
       - telemetry/build_and_test:
-          name: "otp-20"
-          version: "20-alpine"
+          version: "20"
           codecov_flag: "otp20"
       - telemetry/build_and_test:
-          name: "otp-19"
           version: "19"
           codecov_flag: "otp19"
-          pkg_install_cmd: "apt-get update && apt-get install -y"
       - telemetry/build_and_test:
           name: "otp-18"
           version: "18"
           codecov_flag: "otp18"
-          pkg_install_cmd: "apt-get update && apt-get install -y"
