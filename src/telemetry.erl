@@ -38,12 +38,10 @@
 -type event_prefix() :: [atom()].
 -type handler_config() :: term().
 -type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
-
-%% TODO: change to := when OTP-18 support can be dropped
--type handler() :: #{id => handler_id(),
-                     event_name => event_name(),
-                     function => handler_function(),
-                     config => handler_config()}.
+-type handler() :: #{id := handler_id(),
+                     event_name := event_name(),
+                     function := handler_function(),
+                     config := handler_config()}.
 
 -export_type([handler_id/0,
               event_name/0,
@@ -135,7 +133,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
                 ?WITH_STACKTRACE(Class, Reason, Stacktrace)
                     detach(HandlerId),
                     ?LOG_ERROR("Handler ~p has failed and has been detached. "
-                               "Exception: class=~p reason=~p stacktrace=~p",
+                               "Class=~p~nReason=~p~nStacktrace=~p~n",
                                [HandlerId, Class, Reason, Stacktrace])
             end
         end,
