@@ -10,7 +10,6 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
   {licenses, ["Apache 2.0"]},
   {links, [{"Github", "https://github.com/beam-telemetry/telemetry"}]}
  ]}.
