@@ -19,13 +19,21 @@ is sent. The first step is to execute a measurement.
 In Elixir:
 
 ```elixir
-:telemetry.execute([:web, :request, :done], %{latency: latency}, %{request_path: path, status_code: status})
+:telemetry.execute(
+  [:web, :request, :done],
+  %{latency: latency},
+  %{request_path: path, status_code: status}
+)
 ```
 
 In Erlang:
 
 ```erlang
-telemetry:execute([web, request, done], #{latency => Latency}, #{request_path => Path, status_code => Status})
+telemetry:execute(
+  [web, request, done],
+  #{latency => Latency},
+  #{request_path => Path, status_code => Status}
+)
 ```
 
 Then you can create a module to be invoked whenever the event happens.
@@ -60,13 +68,25 @@ Finally, all you need to do is to attach the module to the executed event.
 In Elixir:
 
 ```elixir
-:telemetry.attach("log-response-handler", [:web, :request, :done], &LogResponseHandler.handle_event/4, nil)
+:ok = :telemetry.attach(
+  # unique handler id
+  "log-response-handler",
+  [:web, :request, :done],
+  &LogResponseHandler.handle_event/4,
+  nil
+)
 ```
 
 In Erlang:
 
 ```erlang
-telemetry:attach(<<"log-response-handler">>, [web, request, done], fun log_response_handler:handle_event/4, [])
+ok = telemetry:attach(
+  %% unique handler id
+  <<"log-response-handler">>,
+  [web, request, done],
+  fun log_response_handler:handle_event/4,
+  []
+)
 ```
 
 You might think that it isn't very useful, because you could just as well write a log statement
@@ -74,6 +94,8 @@ instead of `Telemetry.execute/3` call - and you would be right! But now imagine 
 would publish its own set of events with information useful for introspection. Currently each library
 rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
 cases across whole ecosystem.
+
+See [the documentation](https://hexdocs.pm/telemetry/) for details.
 
 ## Installation
 
