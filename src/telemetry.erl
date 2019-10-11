@@ -65,6 +65,10 @@
 %% to achieve maximum performance. In other words, avoid using literal anonymous functions
 %% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
 %% or `&handle_event/4' ) as event handlers.
+%%
+%% All the handlers are executed by the process dispatching event. If the function fails (raises,
+%% exits or throws) then the handler is removed.
+%% Note that you should not rely on the order in which handlers are invoked.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
@@ -84,6 +88,10 @@ attach(HandlerId, EventName, Function, Config) ->
 %% to achieve maximum performance. In other words, avoid using literal anonymous functions
 %% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
 %% or `&handle_event/4' ) as event handlers.
+%%
+%% All the handlers are executed by the process dispatching event. If the function fails (raises,
+%% exits or throws) then the handler is removed.
+%% Note that you should not rely on the order in which handlers are invoked.
 -spec attach_many(HandlerId, [EventName], Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
@@ -110,9 +118,6 @@ detach(HandlerId) ->
 %% <li>the map of event metadata</li>
 %% <li>the handler configuration given to {@link attach/4}</li>
 %% </ul>
-%% All the handlers are executed by the process calling this function. If the function fails (raises,
-%% exits or throws) then the handler is removed.
-%% Note that you should not rely on the order in which handlers are invoked.
 -spec execute(EventName, Measurements, Metadata) -> ok when
       EventName :: event_name(),
       Measurements :: event_measurements() | event_value(),
