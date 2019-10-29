@@ -144,7 +144,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
         end,
     lists:foreach(ApplyFun, Handlers).
 
-%% @equiv telemetry:execute(EventName, Measurements, #{})
+%% @equiv execute(EventName, Measurements, #{})
 -spec execute(EventName, Measurements) -> ok when
       EventName :: event_name(),
       Measurements :: event_measurements() | event_value().
