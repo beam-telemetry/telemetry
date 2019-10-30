@@ -64,9 +64,8 @@ handle_event([web, request, done], #{latency := Latency}, #{path := Path,
 ```
 
 **Important note:**
-Currently, your `handle_event` function will be called synchronously after `telemetry:execute` call. So in some cases, you may want to add asynchronous code inside your `handle_event`. 
 
-For example, if you want to send a metric to the external service with HTTP request after a very frequent `ecto` event. If you do it in sync way - you can slow down your main logic flow.
+The `handle_event` callback of each handler is invoked synchronously on each `telemetry:execute` call. Therefore, it is extremely important to avoid blocking operations. If you need to perform any action that it is not immediate, consider offloading the work to a separate process (or a pool of processes) by sending a message.
 
 Finally, all you need to do is to attach the module to the executed event.
 
