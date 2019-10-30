@@ -63,6 +63,10 @@ handle_event([web, request, done], #{latency := Latency}, #{path := Path,
 
 ```
 
+**Important note:**
+
+The `handle_event` callback of each handler is invoked synchronously on each `telemetry:execute` call. Therefore, it is extremely important to avoid blocking operations. If you need to perform any action that it is not immediate, consider offloading the work to a separate process (or a pool of processes) by sending a message.
+
 Finally, all you need to do is to attach the module to the executed event.
 
 In Elixir:
