@@ -27,7 +27,6 @@
 -include_lib("kernel/include/logger.hrl").
 -else.
 -define(LOG_WARNING(Msg, Args), error_logger:warning_msg(Msg, Args)).
--define(LOG_WARNING(Msg), error_logger:warning_msg(Msg)).
 -endif.
 
 
@@ -128,15 +127,7 @@ execute(EventName, Value, Metadata) when is_number(Value) ->
                  "Use a measurement map instead.", []),
     execute(EventName, #{value => Value}, Metadata);
 execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(Metadata) ->
-    Handlers =
-      try
-        telemetry_handler_table:list_for_event(EventName)
-      catch
-        error:badarg ->
-            ?LOG_WARNING("Failed to lookup telemetry handlers. "
-                         "Ensure the telemetry application has been started. "),
-            []
-      end,
+    Handlers = telemetry_handler_table:list_for_event(EventName),
     ApplyFun =
         fun(#handler{id=HandlerId,
                      function=HandlerFunction,

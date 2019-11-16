@@ -44,7 +44,14 @@ delete(HandlerId) ->
 
 -spec list_for_event(telemetry:event_name()) -> [#handler{}].
 list_for_event(EventName) ->
-    ets:lookup(?MODULE, EventName).
+    try
+        ets:lookup(?MODULE, EventName)
+    catch
+        error:badarg ->
+            error_logger:warning_msg("Failed to lookup telemetry handlers. "
+                                     "Ensure the telemetry application has been started. "),
+            []
+    end.
 
 -spec list_by_prefix(telemetry:event_prefix()) -> [#handler{}].
 list_by_prefix(EventPrefix) ->
