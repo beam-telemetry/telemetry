@@ -17,19 +17,6 @@
 
 -include("telemetry.hrl").
 
--ifdef('OTP_RELEASE').
--include_lib("kernel/include/logger.hrl").
--else.
--define(LOG_ERROR(Msg, Args), error_logger:error_msg(Msg, Args)).
--endif.
-
--ifdef('OTP_RELEASE').
--include_lib("kernel/include/logger.hrl").
--else.
--define(LOG_WARNING(Msg, Args), error_logger:warning_msg(Msg, Args)).
--endif.
-
-
 -type handler_id() :: term().
 -type event_name() :: [atom(), ...].
 -type event_measurements() :: map().

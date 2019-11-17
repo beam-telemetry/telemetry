@@ -48,8 +48,8 @@ list_for_event(EventName) ->
         ets:lookup(?MODULE, EventName)
     catch
         error:badarg ->
-            error_logger:warning_msg("Failed to lookup telemetry handlers. "
-                                     "Ensure the telemetry application has been started. "),
+            ?LOG_WARNING("Failed to lookup telemetry handlers. "
+                         "Ensure the telemetry application has been started. ", []),
             []
     end.
 

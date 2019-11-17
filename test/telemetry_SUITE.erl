@@ -11,7 +11,7 @@ all() ->
      no_execute_detached, no_execute_on_prefix, no_execute_on_specific,
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
-     safe_execute].
+     off_execute].
 
 init_per_suite(Config) ->
     application:ensure_all_started(telemetry),
@@ -27,12 +27,6 @@ init_per_testcase(_, Config) ->
 end_per_testcase(_, Config) ->
     HandlerId = ?config(id, Config),
     telemetry:detach(HandlerId).
-
-% Ensure calling execute is safe even if telemetry app isn't running
-safe_execute(Config) ->
-    application:stop(telemetry),
-    telemetry:execute([event, name], #{}, #{}),
-    application:ensure_all_started(telemetry).
 
 bad_event_names(Config) ->
     HandlerId = ?config(id, Config),
@@ -300,6 +294,11 @@ default_metadata(Config) ->
             ct:fail(missing_echo_event)
     end.
 
+% Ensure calling execute is safe when the telemetry application is off
+off_execute(Config) ->
+    application:stop(telemetry),
+    telemetry:execute([event, name], #{}, #{}),
+    application:ensure_all_started(telemetry).
 
 echo_event(Event, Measurements, Metadata, #{send_to := Pid} = Config) ->
     Pid ! {event, Event, Measurements, Metadata, Config}.
