@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/elixir-telemetry/telemetry/tree/v0.4.1)
+
+Apart from the code changes listed below, this release includes a few improvements
+to the documentation.
+
+### Changed
+
+- Calls to `execute/3` when `telemetry` application is not started no longer cause an error.
+
 ## [0.4.0](https://github.com/elixir-telemetry/telemetry/tree/v0.4.0)
 
 A single event value has been replaced by a map of measurements. Now it is up to the consumer of the

@@ -109,7 +109,7 @@ your dependencies in `mix.exs`:
 ```elixir
 defp deps() do
   [
-    {:telemetry, "~> 0.4.0"}
+    {:telemetry, "~> 0.4.1"}
   ]
 end
 ```
@@ -117,7 +117,7 @@ end
 or `rebar.config`:
 
 ``` erlang
-{deps, [{telemetry, "~> 0.4.0"}]}.
+{deps, [{telemetry, "~> 0.4.1"}]}.
 ```
 
 ## Copyright and License
