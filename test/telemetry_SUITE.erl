@@ -10,7 +10,8 @@ all() ->
      list_handlers, list_for_prefix, detach_on_exception,
      no_execute_detached, no_execute_on_prefix, no_execute_on_specific,
      handler_on_multiple_events, remove_all_handler_on_failure,
-     list_handler_on_many, detach_from_all, old_execute, default_metadata].
+     list_handler_on_many, detach_from_all, old_execute, default_metadata,
+     off_execute].
 
 init_per_suite(Config) ->
     application:ensure_all_started(telemetry),
@@ -293,6 +294,11 @@ default_metadata(Config) ->
             ct:fail(missing_echo_event)
     end.
 
+% Ensure calling execute is safe when the telemetry application is off
+off_execute(Config) ->
+    application:stop(telemetry),
+    telemetry:execute([event, name], #{}, #{}),
+    application:ensure_all_started(telemetry).
 
 echo_event(Event, Measurements, Metadata, #{send_to := Pid} = Config) ->
     Pid ! {event, Event, Measurements, Metadata, Config}.
