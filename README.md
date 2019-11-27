@@ -57,7 +57,7 @@ In Erlang:
 
 -include_lib("kernel/include/logger.hrl")
 
-handle_event([web, request, done], #{latency := Latency}, #{path := Path,
+handle_event([web, request, done], #{latency := Latency}, #{request_path := Path,
                                                             status_code := Status}, _Config) ->
   ?LOG_INFO("[~s] ~p sent in ~p", [Path, Status, Latency]).
 
