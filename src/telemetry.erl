@@ -11,6 +11,7 @@
 -export([attach/4,
          attach_many/4,
          detach/1,
+         list_events/1,
          list_handlers/1,
          execute/2,
          execute/3]).
@@ -137,6 +138,29 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
       Measurements :: event_measurements() | event_value().
 execute(EventName, Measurements) ->
     execute(EventName, Measurements, #{}).
+
+list_events(Application) ->
+    {ok, Modules} = application:get_key(Application, modules),
+    AllModuleEvents = lists:map(fun events_for_module/1, Modules),
+    AllEvents = lists:map(fun flatten_events/1, AllModuleEvents),
+    lists:concat(AllEvents).
+
+events_for_module(Module) ->
+    Info = Module:module_info(),
+        Attributes = proplists:get_value(attributes, Info),
+        proplists:get_all_values(telemetry_events, Attributes).
+
+flatten_events(ModuleEvents) ->
+    lists:foldl(fun(Events, Acc) ->
+            case Events of
+                [] ->
+                    Acc;
+                [H|_] when is_list(H) ->
+                    Events ++ Acc;
+                _ ->
+                    [Events | Acc]
+            end
+        end, [], ModuleEvents).
 
 %% @doc Returns all handlers attached to events with given prefix.
 %%
