@@ -45,7 +45,7 @@ delete(HandlerId) ->
 -spec list_for_event(telemetry:event_name()) -> [#handler{}].
 list_for_event(EventName) ->
     try
-        ets:lookup(?MODULE, EventName)
+        ets:match_object(?MODULE, match_pattern_for_prefix(EventName))
     catch
         error:badarg ->
             ?LOG_WARNING("Failed to lookup telemetry handlers. "
@@ -67,7 +67,7 @@ handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
                                      _='_'}) of
         [] ->
             Objects = [#handler{id=HandlerId,
-                                event_name=EventName,
+                                event_name=EventName ++ [HandlerId],
                                 function=Function,
                                 config=Config} || EventName <- EventNames],
             ets:insert(?MODULE, Objects),
@@ -77,7 +77,7 @@ handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
     end;
 handle_call({delete, HandlerId}, _From, State) ->
     case ets:select_delete(?MODULE, [{#handler{id=HandlerId,
-                                              _='_'}, [], [true]}]) of
+                                               _='_'}, [], [true]}]) of
         0 ->
             {reply, {error, not_found}, State};
         _ ->
@@ -99,7 +99,7 @@ terminate(_Reason, _State) ->
 %%
 
 create_table() ->
-    ets:new(?MODULE, [duplicate_bag, protected, named_table,
+    ets:new(?MODULE, [ordered_set, protected, named_table,
                       {keypos, 3}, {read_concurrency, true}]).
 
 match_pattern_for_prefix(EventPrefix) ->
