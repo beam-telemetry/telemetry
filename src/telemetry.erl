@@ -209,7 +209,6 @@ detach(HandlerId) ->
 %% </li>
 %% </ul>
 %% </p>
-
 -spec execute(EventName, Measurements, Metadata) -> ok when
       EventName :: event_name(),
       Measurements :: event_measurements() | event_value(),
