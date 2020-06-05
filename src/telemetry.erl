@@ -13,7 +13,8 @@
          detach/1,
          list_handlers/1,
          execute/2,
-         execute/3]).
+         execute/3,
+         span/3]).
 
 -include("telemetry.hrl").
 
@@ -25,6 +26,9 @@
 -type event_prefix() :: [atom()].
 -type handler_config() :: term().
 -type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
+-type span_result() :: term().
+-type span_metadata() :: term().
+-type span_function() :: fun(() -> {span_result(), span_metadata()}).
 -type handler() :: #{id := handler_id(),
                      event_name := event_name(),
                      function := handler_function(),
@@ -38,7 +42,10 @@
               event_prefix/0,
               handler_config/0,
               handler_function/0,
-              handler/0]).
+              handler/0,
+              span_result/0,
+              span_metadata/0,
+              span_function/0]).
 
 %% @doc Attaches the handler to the event.
 %%
@@ -109,11 +116,44 @@ detach(HandlerId) ->
 %% <h4>Best practives and conventions:</h4>
 %% 
 %% <p>
-%% While you are able to emit messages of any `event_name' structure, it is recommended that you use the
-%% following guidelines for certain types of events.
+%% While you are able to emit messages of any `event_name' structure, it is recommended that you follow the
+%% the guidelines laid out in `span/3' if you are capturing start/stop events.
 %% </p>
+-spec execute(EventName, Measurements, Metadata) -> ok when
+      EventName :: event_name(),
+      Measurements :: event_measurements() | event_value(),
+      Metadata :: event_metadata().
+execute(EventName, Value, Metadata) when is_number(Value) ->
+    ?LOG_WARNING("Using execute/3 with a single event value is deprecated. "
+                 "Use a measurement map instead.", []),
+    execute(EventName, #{value => Value}, Metadata);
+execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(Metadata) ->
+    Handlers = telemetry_handler_table:list_for_event(EventName),
+    ApplyFun =
+        fun(#handler{id=HandlerId,
+                     function=HandlerFunction,
+                     config=Config}) ->
+            try
+                HandlerFunction(EventName, Measurements, Metadata, Config)
+            catch
+                ?WITH_STACKTRACE(Class, Reason, Stacktrace)
+                    detach(HandlerId),
+                    ?LOG_ERROR("Handler ~p has failed and has been detached. "
+                               "Class=~p~nReason=~p~nStacktrace=~p~n",
+                               [HandlerId, Class, Reason, Stacktrace])
+            end
+        end,
+    lists:foreach(ApplyFun, Handlers).
+
+%% @doc Emit start, and stop/exception events, invoking the handlers attached to each.
 %%
-%% For `telemetry' events denoting the <strong>start</strong> of larger event, the following structure is recommended:
+%% When this function is called, 2 events will be emitted via `execute/3'. Those events will be either of the following
+%% pairs:
+%% <ul>
+%% <li>`EventPrefix ++ [start]' and  `EventPrefix ++ [stop]'</li>
+%% <li>`EventPrefix ++ [start]' and `EventPrefix ++ [exception]'</li>
+%% </ul>
+%% Below is a breakdown of the measurements and metadata associated with each individual event:
 %% <p>
 %% <ul>
 %% <li>
@@ -209,31 +249,22 @@ detach(HandlerId) ->
 %% </li>
 %% </ul>
 %% </p>
--spec execute(EventName, Measurements, Metadata) -> ok when
-      EventName :: event_name(),
-      Measurements :: event_measurements() | event_value(),
-      Metadata :: event_metadata().
-execute(EventName, Value, Metadata) when is_number(Value) ->
-    ?LOG_WARNING("Using execute/3 with a single event value is deprecated. "
-                 "Use a measurement map instead.", []),
-    execute(EventName, #{value => Value}, Metadata);
-execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(Metadata) ->
-    Handlers = telemetry_handler_table:list_for_event(EventName),
-    ApplyFun =
-        fun(#handler{id=HandlerId,
-                     function=HandlerFunction,
-                     config=Config}) ->
-            try
-                HandlerFunction(EventName, Measurements, Metadata, Config)
-            catch
-                ?WITH_STACKTRACE(Class, Reason, Stacktrace)
-                    detach(HandlerId),
-                    ?LOG_ERROR("Handler ~p has failed and has been detached. "
-                               "Class=~p~nReason=~p~nStacktrace=~p~n",
-                               [HandlerId, Class, Reason, Stacktrace])
-            end
-        end,
-    lists:foreach(ApplyFun, Handlers).
+-spec span(event_prefix(), event_metadata(), span_function()) -> span_result().
+span(EventPrefix, StartMetadata, SpanFunction) ->
+    StartTime = erlang:monotonic_time(),
+    execute(EventPrefix ++ [start], #{system_time => erlang:system_time()}, StartMetadata),
+    try
+        {Result, StopMetadata} = SpanFunction(),
+        execute(EventPrefix ++ [stop], #{duration => erlang:monotonic_time() - StartTime}, StopMetadata),
+        Result
+    catch
+        ?WITH_STACKTRACE(Class, Reason, Stacktrace)
+            execute(
+                EventPrefix ++ [exception], 
+                #{duration => erlang:monotonic_time() - StartTime}, 
+                #{kind => Class, reason => Reason, stacktrace => Stacktrace}
+            )
+    end.
 
 %% @equiv execute(EventName, Measurements, #{})
 -spec execute(EventName, Measurements) -> ok when
