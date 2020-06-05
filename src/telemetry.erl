@@ -105,6 +105,111 @@ detach(HandlerId) ->
 %% <li>the map of event metadata</li>
 %% <li>the handler configuration given to {@link attach/4}</li>
 %% </ul>
+%%
+%% <h4>Best practives and conventions:</h4>
+%% 
+%% <p>
+%% While you are able to emit messages of any `event_name' structure, it is recommended that you use the
+%% following guidelines for certain types of events.
+%% </p>
+%%
+%% For `telemetry' events denoting the <strong>start</strong> of larger event, the following structure is recommended:
+%% <p>
+%% <ul>
+%% <li>
+%% Event: 
+%% ```
+%% EventPrefix ++ [start]
+%% '''
+%% </li>
+%% <li>
+%% Measurements: 
+%% ```
+%% #{
+%%   %% The current system time in native units from
+%%   %% calling: erlang:system_time()
+%%   system_time => integer()
+%% }
+%% '''
+%% </li>
+%% <li>
+%% Metadata: 
+%% ```
+%% #{
+%%   %% User defined metadata
+%%   ...
+%% }
+%% '''
+%% </li>
+%% </ul>
+%% </p>
+%%
+%% For `telemetry' events denoting the <strong>stop</strong> of larger event, the following structure is recommended:
+%% <p>
+%% <ul>
+%% <li>
+%% Event: 
+%% ```
+%% EventPrefix ++ [stop]
+%% '''
+%% </li>
+%% <li>
+%% Measurements: 
+%% ```
+%% #{
+%%   %% The current monotonic time minus the start monotonic time in native units 
+%%   %% by calling: erlang:monotonic_time() - start_monotonic_time
+%%   duration => integer() 
+%% }
+%% '''
+%% </li>
+%% <li>
+%% Metadata: 
+%% ```
+%% #{
+%%   %% An optional error field if the stop event is as the result of an error 
+%%   %% but not necessarily an exception
+%%   error => term(),
+%%   ...
+%% }
+%% '''
+%% </li>
+%% </ul>
+%% </p>
+%%
+%% For `telemetry' events denoting an <strong>exception</strong> of a larger event, the following structure is recommended:
+%% <p>
+%% <ul>
+%% <li>
+%% Event: 
+%% ```
+%% EventPrefix ++ [exception]
+%% '''
+%% </li>
+%% <li>
+%% Measurements: 
+%% ```
+%% #{
+%%   %% The current monotonic time minus the start monotonic time in native units 
+%%   %% by calling: erlang:monotonic_time() - start_monotonic_time 
+%%   duration => integer()
+%% }
+%% '''
+%% </li>
+%% <li>
+%% Metadata: 
+%% ```
+%% #{
+%%   kind => throw | error | exit,
+%%   reason => term(),
+%%   stacktrace => list(),
+%%   ...
+%% }
+%% '''
+%% </li>
+%% </ul>
+%% </p>
+
 -spec execute(EventName, Measurements, Metadata) -> ok when
       EventName :: event_name(),
       Measurements :: event_measurements() | event_value(),
