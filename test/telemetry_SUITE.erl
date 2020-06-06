@@ -356,7 +356,7 @@ invoke_exception_span_handlers(Config) ->
     receive
         {event, ExceptionEvent, StopMeasurements, ExceptionMetadata, HandlerConfig} ->
           ?assertEqual([duration], maps:keys(StopMeasurements)),
-          ?assertEqual([kind, reason, stacktrace], lists:sort(maps:keys(ExceptionMetadata)))
+          ?assertEqual([kind, reason, some, stacktrace], lists:sort(maps:keys(ExceptionMetadata)))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end.

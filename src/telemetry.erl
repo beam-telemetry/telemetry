@@ -249,6 +249,8 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %%   kind => throw | error | exit,
 %%   reason => term(),
 %%   stacktrace => list(),
+%%   % User defined metadata from the start event
+%%    ...
 %% }
 %% '''
 %% </li>
@@ -265,10 +267,11 @@ span(EventPrefix, StartMetadata, SpanFunction) ->
           Result
     catch
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
+            ExceptionMetadata = #{kind => Class, reason => Reason, stacktrace => Stacktrace},
             execute(
                 EventPrefix ++ [exception],
                 #{duration => erlang:monotonic_time() - StartTime},
-                #{kind => Class, reason => Reason, stacktrace => Stacktrace}
+                maps:merge(StartMetadata, ExceptionMetadata)
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
