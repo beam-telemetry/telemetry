@@ -267,11 +267,10 @@ span(EventPrefix, StartMetadata, SpanFunction) ->
           Result
     catch
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
-            ExceptionMetadata = #{kind => Class, reason => Reason, stacktrace => Stacktrace},
             execute(
                 EventPrefix ++ [exception],
                 #{duration => erlang:monotonic_time() - StartTime},
-                maps:merge(StartMetadata, ExceptionMetadata)
+                StartMetadata#{kind => Class, reason => Reason, stacktrace => Stacktrace}
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
