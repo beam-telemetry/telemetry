@@ -74,7 +74,7 @@ attach(HandlerId, EventName, Function, Config) ->
 %% @doc Attaches the handler to many events.
 %%
 %% The handler will be invoked whenever any of the events in the `event_names' list is emitted. Note
-%% that failure of the handler on any of these invokations will detach it from all the events in
+%% that failure of the handler on any of these invocations will detach it from all the events in
 %% `event_name' (the same applies to manual detaching using {@link detach/1}).
 %%
 %% <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
@@ -113,7 +113,7 @@ detach(HandlerId) ->
 %% <li>the handler configuration given to {@link attach/4}</li>
 %% </ul>
 %%
-%% <h4>Best practives and conventions:</h4>
+%% <h4>Best practices and conventions:</h4>
 %%
 %% <p>
 %% While you are able to emit messages of any `event_name' structure, it is recommended that you follow the
@@ -155,7 +155,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% </ul>
 %% Below is a breakdown of the measurements and metadata associated with each individual event.
 %%
-%% For `telemetry' events denoting the <strong>start</strong> of larger event, the following data is provided:
+%% For `telemetry' events denoting the <strong>start</strong> of a larger event, the following data is provided:
 %% <p>
 %% <ul>
 %% <li>
@@ -186,7 +186,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% </ul>
 %% </p>
 %%
-%% For `telemetry' events denoting the <strong>stop</strong> of larger event, the following data is provided:
+%% For `telemetry' events denoting the <strong>stop</strong> of a larger event, the following data is provided:
 %% <p>
 %% <ul>
 %% <li>
@@ -234,7 +234,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% ```
 %% #{
 %%   % The current monotonic time minus the start monotonic time in native units
-%%   % by calling: erlang:monotonic_time() - start_monotonic_time
+%%   % derived by calling: erlang:monotonic_time() - start_monotonic_time
 %%   duration => integer()
 %% }
 %% '''
