@@ -11,7 +11,7 @@ all() ->
      no_execute_detached, no_execute_on_prefix, no_execute_on_specific,
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
-     off_execute].
+     off_execute, invoke_successful_span_handlers, invoke_exception_span_handlers].
 
 init_per_suite(Config) ->
     application:ensure_all_started(telemetry),
@@ -236,7 +236,7 @@ list_handler_on_many(Config) ->
                           ?assertMatch([#{id := HandlerId,
                                           event_name := Event,
                                           function := HandlerFun,
-                                          config := EventConfig}],
+                                          config := _EventConfig}],
                                        telemetry:list_handlers(Event))
     end, [Event1, Event2, Event3]).
 
@@ -294,8 +294,59 @@ default_metadata(Config) ->
             ct:fail(missing_echo_event)
     end.
 
+% Ensure that a start and stop event are emitted during a successful span call
+invoke_successful_span_handlers(Config) ->
+    HandlerId = ?config(id, Config),
+    EventPrefix = [some, action],
+    StartEvent = EventPrefix ++ [start], 
+    StopEvent = EventPrefix ++ [stop],
+    HandlerConfig = #{send_to => self()},
+    StartMetadata = #{some => start_metadata},
+    StopMetadata = #{other => stop_metadata},
+    SpanFunction = fun() -> {ok, StopMetadata} end,
+
+    telemetry:attach_many(HandlerId, [StartEvent, StopEvent], fun ?MODULE:echo_event/4, HandlerConfig),
+    telemetry:span(EventPrefix, StartMetadata, SpanFunction),
+
+    receive
+        {event, StartEvent, _StartMeasurements, StartMetadata, HandlerConfig} -> ok 
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end,
+
+    receive
+        {event, StopEvent, _StopMeasurements, StopMetadata, HandlerConfig} -> ok
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end.
+
+% Ensure that a start and exception event are emitted during an error span call
+invoke_exception_span_handlers(Config) ->
+    HandlerId = ?config(id, Config),
+    EventPrefix = [some, action],
+    StartEvent = EventPrefix ++ [start], 
+    ExceptionEvent = EventPrefix ++ [exception],
+    HandlerConfig = #{send_to => self()},
+    StartMetadata = #{some => start_metadata},
+    SpanFunction = fun() -> 1 / 0 end,
+
+    telemetry:attach_many(HandlerId, [StartEvent, ExceptionEvent], fun ?MODULE:echo_event/4, HandlerConfig),
+    telemetry:span(EventPrefix, StartMetadata, SpanFunction),
+
+    receive
+        {event, StartEvent, _StartMeasurements, StartMetadata, HandlerConfig} -> ok 
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end,
+
+    receive
+        {event, ExceptionEvent, _StopMeasurements, StopMetadata, HandlerConfig} -> ok
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end.
+
 % Ensure calling execute is safe when the telemetry application is off
-off_execute(Config) ->
+off_execute(_Config) ->
     application:stop(telemetry),
     telemetry:execute([event, name], #{}, #{}),
     application:ensure_all_started(telemetry).
