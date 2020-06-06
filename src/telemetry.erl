@@ -114,7 +114,7 @@ detach(HandlerId) ->
 %% </ul>
 %%
 %% <h4>Best practives and conventions:</h4>
-%% 
+%%
 %% <p>
 %% While you are able to emit messages of any `event_name' structure, it is recommended that you follow the
 %% the guidelines laid out in `span/3' if you are capturing start/stop events.
@@ -147,36 +147,38 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 
 %% @doc Emit start, and stop/exception events, invoking the handlers attached to each.
 %%
-%% When this function is called, 2 events will be emitted via `execute/3'. Those events will be either of the following
+%% When this function is called, 2 events will be emitted via `execute/3'. Those events will be one of the following
 %% pairs:
 %% <ul>
 %% <li>`EventPrefix ++ [start]' and  `EventPrefix ++ [stop]'</li>
 %% <li>`EventPrefix ++ [start]' and `EventPrefix ++ [exception]'</li>
 %% </ul>
-%% Below is a breakdown of the measurements and metadata associated with each individual event:
+%% Below is a breakdown of the measurements and metadata associated with each individual event.
+%%
+%% For `telemetry' events denoting the <strong>start</strong> of larger event, the following data is provided:
 %% <p>
 %% <ul>
 %% <li>
-%% Event: 
+%% Event:
 %% ```
 %% EventPrefix ++ [start]
 %% '''
 %% </li>
 %% <li>
-%% Measurements: 
+%% Measurements:
 %% ```
 %% #{
-%%   %% The current system time in native units from
-%%   %% calling: erlang:system_time()
+%%   % The current system time in native units from
+%%   % calling: erlang:system_time()
 %%   system_time => integer()
 %% }
 %% '''
 %% </li>
 %% <li>
-%% Metadata: 
+%% Metadata:
 %% ```
 %% #{
-%%   %% User defined metadata
+%%   % User defined metadata
 %%   ...
 %% }
 %% '''
@@ -184,31 +186,32 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% </ul>
 %% </p>
 %%
-%% For `telemetry' events denoting the <strong>stop</strong> of larger event, the following structure is recommended:
+%% For `telemetry' events denoting the <strong>stop</strong> of larger event, the following data is provided:
 %% <p>
 %% <ul>
 %% <li>
-%% Event: 
+%% Event:
 %% ```
 %% EventPrefix ++ [stop]
 %% '''
 %% </li>
 %% <li>
-%% Measurements: 
+%% Measurements:
 %% ```
 %% #{
-%%   %% The current monotonic time minus the start monotonic time in native units 
-%%   %% by calling: erlang:monotonic_time() - start_monotonic_time
-%%   duration => integer() 
+%%   % The current monotonic time minus the start monotonic time in native units
+%%   % by calling: erlang:monotonic_time() - start_monotonic_time
+%%   duration => integer()
 %% }
 %% '''
 %% </li>
 %% <li>
-%% Metadata: 
+%% Metadata:
 %% ```
 %% #{
-%%   %% An optional error field if the stop event is as the result of an error 
-%%   %% but not necessarily an exception
+%%   % An optional error field if the stop event is as the result of an error
+%%   % but not necessarily an exception. Additional user defined metadata can
+%%   % also be added here.
 %%   error => term(),
 %%   ...
 %% }
@@ -217,33 +220,32 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% </ul>
 %% </p>
 %%
-%% For `telemetry' events denoting an <strong>exception</strong> of a larger event, the following structure is recommended:
+%% For `telemetry' events denoting an <strong>exception</strong> of a larger event, the following data is provided:
 %% <p>
 %% <ul>
 %% <li>
-%% Event: 
+%% Event:
 %% ```
 %% EventPrefix ++ [exception]
 %% '''
 %% </li>
 %% <li>
-%% Measurements: 
+%% Measurements:
 %% ```
 %% #{
-%%   %% The current monotonic time minus the start monotonic time in native units 
-%%   %% by calling: erlang:monotonic_time() - start_monotonic_time 
+%%   % The current monotonic time minus the start monotonic time in native units
+%%   % by calling: erlang:monotonic_time() - start_monotonic_time
 %%   duration => integer()
 %% }
 %% '''
 %% </li>
 %% <li>
-%% Metadata: 
+%% Metadata:
 %% ```
 %% #{
 %%   kind => throw | error | exit,
 %%   reason => term(),
 %%   stacktrace => list(),
-%%   ...
 %% }
 %% '''
 %% </li>
@@ -265,8 +267,8 @@ span(EventPrefix, StartMetadata, SpanFunction) ->
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
             io:fwrite("\n--- EXCEPTION --- \n"),
             execute(
-                EventPrefix ++ [exception], 
-                #{duration => erlang:monotonic_time() - StartTime}, 
+                EventPrefix ++ [exception],
+                #{duration => erlang:monotonic_time() - StartTime},
                 #{kind => Class, reason => Reason, stacktrace => Stacktrace}
             )
     end.
