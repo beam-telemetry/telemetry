@@ -253,19 +253,15 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% </p>
 -spec span(event_prefix(), event_metadata(), span_function()) -> span_result().
 span(EventPrefix, StartMetadata, SpanFunction) ->
-    io:fwrite("\n--- RAWR --- \n"),
     StartTime = erlang:monotonic_time(),
     execute(EventPrefix ++ [start], #{system_time => erlang:system_time()}, StartMetadata),
 
     try
-        io:fwrite("\n--- START --- \n"),
         {Result, StopMetadata} = SpanFunction(),
         execute(EventPrefix ++ [stop], #{duration => erlang:monotonic_time() - StartTime}, StopMetadata),
-        io:fwrite("\n--- STOP --- \n"),
         Result
     catch
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
-            io:fwrite("\n--- EXCEPTION --- \n"),
             execute(
                 EventPrefix ++ [exception],
                 #{duration => erlang:monotonic_time() - StartTime},
