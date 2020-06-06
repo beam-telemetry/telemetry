@@ -5,6 +5,8 @@
 -include_lib("common_test/include/ct.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
+-include("telemetry.hrl").
+
 all() ->
     [bad_event_names, duplicate_attach, invoke_handler,
      list_handlers, list_for_prefix, detach_on_exception,
@@ -333,7 +335,16 @@ invoke_exception_span_handlers(Config) ->
     SpanFunction = fun() -> 1 / 0 end,
 
     telemetry:attach_many(HandlerId, [StartEvent, ExceptionEvent], fun ?MODULE:echo_event/4, HandlerConfig),
-    telemetry:span(EventPrefix, StartMetadata, SpanFunction),
+
+    try
+        telemetry:span(EventPrefix, StartMetadata, SpanFunction),
+        ct:fail(span_function_expected_error)
+    catch
+        ?WITH_STACKTRACE(Class, Reason, Stacktrace)
+            ?assertEqual(error, Class),
+            ?assertEqual(badarith, Reason),
+            ?assert(erlang:is_list(Stacktrace))
+    end,
 
     receive
         {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->

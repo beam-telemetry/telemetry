@@ -153,6 +153,9 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% <li>`EventPrefix ++ [start]' and  `EventPrefix ++ [stop]'</li>
 %% <li>`EventPrefix ++ [start]' and `EventPrefix ++ [exception]'</li>
 %% </ul>
+%%
+%% However, note that in case the current processes crashes due to an exit signal
+%% of another process, then none or only part of those events would be emitted.
 %% Below is a breakdown of the measurements and metadata associated with each individual event.
 %%
 %% For `telemetry' events denoting the <strong>start</strong> of a larger event, the following data is provided:
@@ -256,17 +259,18 @@ span(EventPrefix, StartMetadata, SpanFunction) ->
     StartTime = erlang:monotonic_time(),
     execute(EventPrefix ++ [start], #{system_time => erlang:system_time()}, StartMetadata),
 
-    try
-        {Result, StopMetadata} = SpanFunction(),
-        execute(EventPrefix ++ [stop], #{duration => erlang:monotonic_time() - StartTime}, StopMetadata),
-        Result
+    try {_, #{}} = SpanFunction() of
+      {Result, StopMetadata} ->
+          execute(EventPrefix ++ [stop], #{duration => erlang:monotonic_time() - StartTime}, StopMetadata),
+          Result
     catch
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
             execute(
                 EventPrefix ++ [exception],
                 #{duration => erlang:monotonic_time() - StartTime},
                 #{kind => Class, reason => Reason, stacktrace => Stacktrace}
-            )
+            ),
+            erlang:raise(Class, Reason, Stacktrace)
     end.
 
 %% @equiv execute(EventName, Measurements, #{})
