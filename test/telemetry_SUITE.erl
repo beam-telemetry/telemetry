@@ -298,24 +298,26 @@ default_metadata(Config) ->
 invoke_successful_span_handlers(Config) ->
     HandlerId = ?config(id, Config),
     EventPrefix = [some, action],
-    StartEvent = EventPrefix ++ [start], 
+    StartEvent = EventPrefix ++ [start],
     StopEvent = EventPrefix ++ [stop],
     HandlerConfig = #{send_to => self()},
     StartMetadata = #{some => start_metadata},
     StopMetadata = #{other => stop_metadata},
-    SpanFunction = fun() -> {ok, StopMetadata} end,
+    ErrorSpanFunction = fun() -> {ok, StopMetadata} end,
 
     telemetry:attach_many(HandlerId, [StartEvent, StopEvent], fun ?MODULE:echo_event/4, HandlerConfig),
-    telemetry:span(EventPrefix, StartMetadata, SpanFunction),
+    telemetry:span(EventPrefix, StartMetadata, ErrorSpanFunction),
 
     receive
-        {event, StartEvent, _StartMeasurements, StartMetadata, HandlerConfig} -> ok 
+        {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->
+          ?assertEqual([system_time], maps:keys(StartMeasurements))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end,
 
     receive
-        {event, StopEvent, _StopMeasurements, StopMetadata, HandlerConfig} -> ok
+        {event, StopEvent, StopMeasurements, StopMetadata, HandlerConfig} ->
+          ?assertEqual([duration], maps:keys(StopMeasurements))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end.
@@ -324,7 +326,7 @@ invoke_successful_span_handlers(Config) ->
 invoke_exception_span_handlers(Config) ->
     HandlerId = ?config(id, Config),
     EventPrefix = [some, action],
-    StartEvent = EventPrefix ++ [start], 
+    StartEvent = EventPrefix ++ [start],
     ExceptionEvent = EventPrefix ++ [exception],
     HandlerConfig = #{send_to => self()},
     StartMetadata = #{some => start_metadata},
@@ -334,13 +336,16 @@ invoke_exception_span_handlers(Config) ->
     telemetry:span(EventPrefix, StartMetadata, SpanFunction),
 
     receive
-        {event, StartEvent, _StartMeasurements, StartMetadata, HandlerConfig} -> ok 
+        {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->
+          ?assertEqual([system_time], maps:keys(StartMeasurements))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end,
 
     receive
-        {event, ExceptionEvent, _StopMeasurements, StopMetadata, HandlerConfig} -> ok
+        {event, ExceptionEvent, StopMeasurements, ExceptionMetadata, HandlerConfig} ->
+          ?assertEqual([duration], maps:keys(StopMeasurements)),
+          ?assertEqual([kind, reason, stacktrace], lists:sort(maps:keys(ExceptionMetadata)))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end.
