@@ -127,8 +127,8 @@ In Erlang:
 
 ```erlang
 process_message(Message) ->
-  Result = telemetry:execute(
-    [worker,, processing],
+  Result = telemetry:span(
+    [worker, processing],
     #{message => Message},
     fun() ->
       Result = % Process the message
