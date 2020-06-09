@@ -27,8 +27,7 @@
 -type handler_config() :: term().
 -type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
 -type span_result() :: term().
--type span_metadata() :: term().
--type span_function() :: fun(() -> {span_result(), span_metadata()}).
+-type span_function() :: fun(() -> {span_result(), event_metadata()}).
 -type handler() :: #{id := handler_id(),
                      event_name := event_name(),
                      function := handler_function(),
@@ -44,7 +43,6 @@
               handler_function/0,
               handler/0,
               span_result/0,
-              span_metadata/0,
               span_function/0]).
 
 %% @doc Attaches the handler to the event.
