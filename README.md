@@ -112,9 +112,10 @@ In Elixir:
 
 ```elixir
 def process_message(message) do
+  start_metadata = %{message: message}
   result = :telemetry.span(
     [:worker, :processing],
-    %{message: message},
+    start_metadata,
     fn ->
       result = # Process the message
       {result, %{metadata: "Information related to the processing of the message"}}
