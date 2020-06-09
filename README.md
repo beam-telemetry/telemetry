@@ -128,14 +128,15 @@ In Erlang:
 
 ```erlang
 process_message(Message) ->
+  StartMetadata =  #{message => Message},
   Result = telemetry:span(
     [worker, processing],
-    #{message => Message},
+    StartMetadata,
     fun() ->
       Result = % Process the message
       {Result, #{metadata => "Information related to the processing of the message"}}
     end
-  )
+  ).
 ```
 
 To then attach to the events that `telemetry:span/3` emits you would do the following:
