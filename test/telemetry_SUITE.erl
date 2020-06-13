@@ -5,13 +5,15 @@
 -include_lib("common_test/include/ct.hrl").
 -include_lib("stdlib/include/assert.hrl").
 
+-include("telemetry.hrl").
+
 all() ->
     [bad_event_names, duplicate_attach, invoke_handler,
      list_handlers, list_for_prefix, detach_on_exception,
      no_execute_detached, no_execute_on_prefix, no_execute_on_specific,
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
-     off_execute].
+     off_execute, invoke_successful_span_handlers, invoke_exception_span_handlers].
 
 init_per_suite(Config) ->
     application:ensure_all_started(telemetry),
@@ -236,7 +238,7 @@ list_handler_on_many(Config) ->
                           ?assertMatch([#{id := HandlerId,
                                           event_name := Event,
                                           function := HandlerFun,
-                                          config := EventConfig}],
+                                          config := _EventConfig}],
                                        telemetry:list_handlers(Event))
     end, [Event1, Event2, Event3]).
 
@@ -294,8 +296,73 @@ default_metadata(Config) ->
             ct:fail(missing_echo_event)
     end.
 
+% Ensure that a start and stop event are emitted during a successful span call
+invoke_successful_span_handlers(Config) ->
+    HandlerId = ?config(id, Config),
+    EventPrefix = [some, action],
+    StartEvent = EventPrefix ++ [start],
+    StopEvent = EventPrefix ++ [stop],
+    HandlerConfig = #{send_to => self()},
+    StartMetadata = #{some => start_metadata},
+    StopMetadata = #{other => stop_metadata},
+    ErrorSpanFunction = fun() -> {ok, StopMetadata} end,
+
+    telemetry:attach_many(HandlerId, [StartEvent, StopEvent], fun ?MODULE:echo_event/4, HandlerConfig),
+    telemetry:span(EventPrefix, StartMetadata, ErrorSpanFunction),
+
+    receive
+        {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->
+          ?assertEqual([system_time], maps:keys(StartMeasurements))
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end,
+
+    receive
+        {event, StopEvent, StopMeasurements, StopMetadata, HandlerConfig} ->
+          ?assertEqual([duration], maps:keys(StopMeasurements))
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end.
+
+% Ensure that a start and exception event are emitted during an error span call
+invoke_exception_span_handlers(Config) ->
+    HandlerId = ?config(id, Config),
+    EventPrefix = [some, action],
+    StartEvent = EventPrefix ++ [start],
+    ExceptionEvent = EventPrefix ++ [exception],
+    HandlerConfig = #{send_to => self()},
+    StartMetadata = #{some => start_metadata},
+    SpanFunction = fun() -> 1 / 0 end,
+
+    telemetry:attach_many(HandlerId, [StartEvent, ExceptionEvent], fun ?MODULE:echo_event/4, HandlerConfig),
+
+    try
+        telemetry:span(EventPrefix, StartMetadata, SpanFunction),
+        ct:fail(span_function_expected_error)
+    catch
+        ?WITH_STACKTRACE(Class, Reason, Stacktrace)
+            ?assertEqual(error, Class),
+            ?assertEqual(badarith, Reason),
+            ?assert(erlang:is_list(Stacktrace))
+    end,
+
+    receive
+        {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->
+          ?assertEqual([system_time], maps:keys(StartMeasurements))
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end,
+
+    receive
+        {event, ExceptionEvent, StopMeasurements, ExceptionMetadata, HandlerConfig} ->
+          ?assertEqual([duration], maps:keys(StopMeasurements)),
+          ?assertEqual([kind, reason, some, stacktrace], lists:sort(maps:keys(ExceptionMetadata)))
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end.
+
 % Ensure calling execute is safe when the telemetry application is off
-off_execute(Config) ->
+off_execute(_Config) ->
     application:stop(telemetry),
     telemetry:execute([event, name], #{}, #{}),
     application:ensure_all_started(telemetry).

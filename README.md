@@ -99,7 +99,108 @@ would publish its own set of events with information useful for introspection. C
 rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
 cases across whole ecosystem.
 
-See [the documentation](https://hexdocs.pm/telemetry/) for details.
+In order to provide uniform events that capture the start and end of discrete events, it is recommended
+that you use the `telemetry:span/3` call. This function will generate a start event and a stop or exception
+event depending on whether the provided function successfully executed or raised and error. Under the hood,
+the `telemetry:span/3` function leverages the `telemetry:execute/3` function, so all the same usages patterns
+apply. If an exception does occur, an `EventPrefix ++ [exception]` event will be emitted and the caught error
+will be re-raised.
+
+To create span events, you would so something like so:
+
+In Elixir:
+
+```elixir
+def process_message(message) do
+  start_metadata = %{message: message}
+  result = :telemetry.span(
+    [:worker, :processing],
+    start_metadata,
+    fn ->
+      result = # Process the message
+      {result, %{metadata: "Information related to the processing of the message"}}
+    end
+  )
+end
+```
+
+In Erlang:
+
+```erlang
+process_message(Message) ->
+  StartMetadata =  #{message => Message},
+  Result = telemetry:span(
+    [worker, processing],
+    StartMetadata,
+    fun() ->
+      Result = % Process the message
+      {Result, #{metadata => "Information related to the processing of the message"}}
+    end
+  ).
+```
+
+To then attach to the events that `telemetry:span/3` emits you would do the following:
+
+In Elixir:
+
+```elixir
+:ok = :telemetry.attach_many(
+  "log-response-handler",
+  [
+    [:worker, :processing, :start],
+    [:worker, :processing, :stop],
+    [:worker, :processing, :exception]
+  ],
+  &LogResponseHandler.handle_event/4,
+  nil
+)
+```
+
+In Erlang:
+
+```erlang
+ok = telemetry:attach_many(
+  <<"log-response-handler">>,
+  [
+    [worker, processing, start],
+    [worker, processing, stop],
+    [worker, processing, exception]
+  ],
+  fun log_response_handler:handle_event/4,
+  []
+)
+```
+
+With the following event handler module defined:
+
+In Elixir:
+
+```elixir
+defmodule LogResponseHandler do
+  require Logger
+
+  def handle_event(event, measurements, metadata, _config) do
+    Logger.info("Event: #{inspect(event)}")
+    Logger.info("Measurements: #{inspect(measurements)}")
+    Logger.info("Metadata: #{inspect(metadata)}")
+  end
+end
+```
+
+In Erlang:
+
+```erlang
+-module(log_response_handler).
+
+-include_lib("kernel/include/logger.hrl")
+
+handle_event(Event, Measurements, Metadata, _Config) ->
+  ?LOG_INFO("Event: ~p", [Event]),
+  ?LOG_INFO("Measurements: ~p", [Measurements]),
+  ?LOG_INFO("Metadata: ~p", [Metadata]).
+```
+
+See [the documentation](https://hexdocs.pm/telemetry/) for more details.
 
 ## Installation
 
@@ -116,7 +217,7 @@ end
 
 or `rebar.config`:
 
-``` erlang
+```erlang
 {deps, [{telemetry, "~> 0.4.1"}]}.
 ```
 
