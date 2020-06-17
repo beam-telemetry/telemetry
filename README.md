@@ -106,7 +106,7 @@ the `telemetry:span/3` function leverages the `telemetry:execute/3` function, so
 apply. If an exception does occur, an `EventPrefix ++ [exception]` event will be emitted and the caught error
 will be re-raised.
 
-To create span events, you would so something like so:
+To create span events, you would do something like so:
 
 In Elixir:
 
