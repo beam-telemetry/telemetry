@@ -105,12 +105,12 @@ event depending on whether the provided function successfully executed or raised
 the `telemetry:span/3` function leverages the `telemetry:execute/3` function, so all the same usage patterns
 apply. If an exception does occur, an `EventPrefix ++ [exception]` event will be emitted and the caught error
 will be re-raised.
-key 
 
 The measurements for the `EventPrefix ++ [start]` event will contain a key called `system_time` which is 
 derived by calling `erlang:system_time()`. For `EventPrefix ++ [stop]` and `EventPrefix ++ [exception]` 
 events, the measurements will contain a key called `duration`, whose value is derived by calling 
-`erlang:monotonic_time() - start_monotonic_time`. Both `system_time` and `duration` represent time as native units.
+`erlang:monotonic_time() - start_monotonic_time`. Both `system_time` and `duration` represent time as 
+native units.
 
 To create span events, you would do something like so:
 
