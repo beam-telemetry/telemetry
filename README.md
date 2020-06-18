@@ -109,7 +109,7 @@ will be re-raised.
 The measurements for the `EventPrefix ++ [start]` event will contain a key called `system_time` which is 
 derived by calling `erlang:system_time()`. For `EventPrefix ++ [stop]` and `EventPrefix ++ [exception]` 
 events, the measurements will contain a key called `duration`, whose value is derived by calling 
-`erlang:monotonic_time() - start_monotonic_time`. Both `system_time` and `duration` represent time as 
+`erlang:monotonic_time() - StartMonotonicTime`. Both `system_time` and `duration` represent time as 
 native units.
 
 To create span events, you would do something like so:
