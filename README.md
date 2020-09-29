@@ -112,6 +112,12 @@ events, the measurements will contain a key called `duration`, whose value is de
 `erlang:monotonic_time() - StartMonotonicTime`. Both `system_time` and `duration` represent time as
 native units.
 
+To convert the duration from native units you can use:
+
+```elixir
+milliseconds = System.convert_time_unit(duration, :native, :millisecond)
+```
+
 To create span events, you would do something like so:
 
 In Elixir:
