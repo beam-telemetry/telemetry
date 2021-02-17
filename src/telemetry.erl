@@ -210,7 +210,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% Metadata:
 %% ```
 %% #{
-%%   % An optional error field if the stop event is as the result of an error
+%%   % An optional error field if the stop event is the result of an error
 %%   % but not necessarily an exception. Additional user defined metadata can
 %%   % also be added here.
 %%   error => term(),
