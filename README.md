@@ -1,6 +1,5 @@
 # Telemetry
 
-[![CircleCI](https://circleci.com/gh/beam-telemetry/telemetry.svg?style=svg)](https://circleci.com/gh/beam-telemetry/telemetry)
 [![Codecov](https://codecov.io/gh/beam-telemetry/telemetry/branch/master/graphs/badge.svg)](https://codecov.io/gh/beam-telemetry/telemetry/branch/master/graphs/badge.svg)
 
 [Documentation](https://hexdocs.pm/telemetry/)
