@@ -13,7 +13,8 @@ all() ->
      no_execute_detached, no_execute_on_prefix, no_execute_on_specific,
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
-     off_execute, invoke_successful_span_handlers, invoke_exception_span_handlers].
+     off_execute, invoke_successful_span_handlers, invoke_exception_span_handlers,
+     spans_generate_unique_default_contexts].
 
 init_per_suite(Config) ->
     application:ensure_all_started(telemetry),
@@ -303,8 +304,8 @@ invoke_successful_span_handlers(Config) ->
     StartEvent = EventPrefix ++ [start],
     StopEvent = EventPrefix ++ [stop],
     HandlerConfig = #{send_to => self()},
-    StartMetadata = #{some => start_metadata},
-    StopMetadata = #{other => stop_metadata},
+    StartMetadata = #{some => start_metadata, telemetry_span_context => ctx},
+    StopMetadata = #{other => stop_metadata, telemetry_span_context => ctx},
     ErrorSpanFunction = fun() -> {ok, StopMetadata} end,
 
     telemetry:attach_many(HandlerId, [StartEvent, StopEvent], fun ?MODULE:echo_event/4, HandlerConfig),
@@ -331,7 +332,7 @@ invoke_exception_span_handlers(Config) ->
     StartEvent = EventPrefix ++ [start],
     ExceptionEvent = EventPrefix ++ [exception],
     HandlerConfig = #{send_to => self()},
-    StartMetadata = #{some => start_metadata},
+    StartMetadata = #{some => start_metadata, telemetry_span_context => ctx},
     SpanFunction = fun() -> 1 / 0 end,
 
     telemetry:attach_many(HandlerId, [StartEvent, ExceptionEvent], fun ?MODULE:echo_event/4, HandlerConfig),
@@ -356,7 +357,48 @@ invoke_exception_span_handlers(Config) ->
     receive
         {event, ExceptionEvent, StopMeasurements, ExceptionMetadata, HandlerConfig} ->
           ?assertEqual([duration], maps:keys(StopMeasurements)),
-          ?assertEqual([kind, reason, some, stacktrace], lists:sort(maps:keys(ExceptionMetadata)))
+          ?assertEqual([kind, reason, some, stacktrace, telemetry_span_context], lists:sort(maps:keys(ExceptionMetadata)))
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end.
+
+% Default span context is generated with a unique value per invocation within a process
+spans_generate_unique_default_contexts(Config) ->
+    HandlerId = ?config(id, Config),
+    EventPrefix = [some, action],
+    StartEvent = EventPrefix ++ [start],
+    StopEvent = EventPrefix ++ [stop],
+    HandlerConfig = #{send_to => self()},
+    StartMetadata = #{},
+    StopMetadata = #{},
+    ErrorSpanFunction = fun() -> {ok, StopMetadata} end,
+
+    telemetry:attach_many(HandlerId, [StartEvent, StopEvent], fun ?MODULE:echo_event/4, HandlerConfig),
+    telemetry:span(EventPrefix, StartMetadata, ErrorSpanFunction),
+
+    receive
+        {event, StartEvent, _, FirstMetadata, HandlerConfig} ->
+            FirstContext = maps:get(telemetry_span_context, FirstMetadata),
+            ?assert(erlang:is_reference(FirstContext)),
+
+            receive
+                {event, StopEvent, _, #{telemetry_span_context:=FirstContext}, HandlerConfig} ->
+                    telemetry:span(EventPrefix, StartMetadata, ErrorSpanFunction),
+
+                    receive
+                        {event, StartEvent, _, SecondMetadata, HandlerConfig} ->
+                            SecondContext = maps:get(telemetry_span_context, SecondMetadata),
+                            ?assertNotEqual(FirstContext, SecondContext),
+                            ok
+                    after
+                        1000 -> ct:fail(timeout_receive_echo)
+                    end,
+                    ok
+            after
+                1000 -> ct:fail(timeout_receive_echo)
+            end,
+
+            ok
     after
         1000 -> ct:fail(timeout_receive_echo)
     end.

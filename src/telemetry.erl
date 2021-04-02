@@ -156,6 +156,12 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% of another process, then none or only part of those events would be emitted.
 %% Below is a breakdown of the measurements and metadata associated with each individual event.
 %%
+%% A default span context is added to event metadata under the `telemetry_span_context` key if none is provided by
+%% the user in the `StartMetadata`. This context is useful for tracing libraries to identify unique
+%% executions of span events within a process to match start, stop, and exception events. Users
+%% should ensure this value is unique within the context of a process at a minimum if overriding this key and
+%% that the same value is provided to both `StartMetadata` and `StopMetadata`.
+%%
 %% For `telemetry' events denoting the <strong>start</strong> of a larger event, the following data is provided:
 %% <p>
 %% <ul>
@@ -179,6 +185,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% Metadata:
 %% ```
 %% #{
+%%   telemetry_span_context => term(),
 %%   % User defined metadata
 %%   ...
 %% }
@@ -214,6 +221,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %%   % but not necessarily an exception. Additional user defined metadata can
 %%   % also be added here.
 %%   error => term(),
+%%   telemetry_span_context => term(),
 %%   ...
 %% }
 %% '''
@@ -247,6 +255,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %%   kind => throw | error | exit,
 %%   reason => term(),
 %%   stacktrace => list(),
+%%   telemetry_span_context => term(),
 %%   % User defined metadata from the start event
 %%    ...
 %% }
@@ -257,18 +266,19 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 -spec span(event_prefix(), event_metadata(), span_function()) -> span_result().
 span(EventPrefix, StartMetadata, SpanFunction) ->
     StartTime = erlang:monotonic_time(),
-    execute(EventPrefix ++ [start], #{system_time => erlang:system_time()}, StartMetadata),
+    DefaultCtx = erlang:make_ref(),
+    execute(EventPrefix ++ [start], #{system_time => erlang:system_time()}, merge_ctx(StartMetadata, DefaultCtx)),
 
     try {_, #{}} = SpanFunction() of
       {Result, StopMetadata} ->
-          execute(EventPrefix ++ [stop], #{duration => erlang:monotonic_time() - StartTime}, StopMetadata),
+          execute(EventPrefix ++ [stop], #{duration => erlang:monotonic_time() - StartTime}, merge_ctx(StopMetadata, DefaultCtx)),
           Result
     catch
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
             execute(
                 EventPrefix ++ [exception],
                 #{duration => erlang:monotonic_time() - StartTime},
-                StartMetadata#{kind => Class, reason => Reason, stacktrace => Stacktrace}
+                merge_ctx(StartMetadata#{kind => Class, reason => Reason, stacktrace => Stacktrace}, DefaultCtx)
             ),
             erlang:raise(Class, Reason, Stacktrace)
     end.
@@ -325,3 +335,7 @@ assert_event_name([_ | _] = List) ->
     end;
 assert_event_name(Term) ->
     erlang:error(badarg, Term).
+
+-spec merge_ctx(event_metadata(), any()) -> event_metadata().
+merge_ctx(#{telemetry_span_context := _} = Metadata, _Ctx) -> Metadata;
+merge_ctx(Metadata, Ctx) -> Metadata#{telemetry_span_context => Ctx}.
