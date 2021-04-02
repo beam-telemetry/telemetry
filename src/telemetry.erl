@@ -159,7 +159,8 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% A default span context is added to event metadata under the `telemetry_span_context` key if none is provided by
 %% the user in the `StartMetadata`. This context is useful for tracing libraries to identify unique
 %% executions of span events within a process to match start, stop, and exception events. Users
-%% should ensure this value is unique within the context of a process at a minimum if overriding this key.
+%% should ensure this value is unique within the context of a process at a minimum if overriding this key and
+%% that the same value is provided to bot `StartMetadata` and `StopMetadata`.
 %%
 %% For `telemetry' events denoting the <strong>start</strong> of a larger event, the following data is provided:
 %% <p>
