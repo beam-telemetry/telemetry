@@ -336,5 +336,5 @@ assert_event_name(Term) ->
     erlang:error(badarg, Term).
 
 -spec merge_ctx(event_metadata(), any()) -> event_metadata().
-merge_ctx(Metadata, Ctx) ->
-    maps:merge(#{telemetry_span_context => Ctx}, Metadata).
+merge_ctx(#{telemetry_span_context := _} = Metadata, _Ctx) -> Metadata;
+merge_ctx(Metadata, Ctx) -> Metadata#{telemetry_span_context => Ctx}.
