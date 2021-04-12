@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3](https://github.com/elixir-telemetry/telemetry/tree/v0.4.3)
+
+This release improves the `telemetry:span/3` function by adding the `telemetry_span_context` metadata
+to all span events. The new metadata enables correlating span events that belong to the same span.
+
+### Added
+
+- Added `telemetry_span_context` metadata to all events emitted by `telemetry:span/3`.
+
 ## [0.4.2](https://github.com/elixir-telemetry/telemetry/tree/v0.4.2)
 
 ### Added
