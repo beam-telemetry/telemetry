@@ -96,7 +96,7 @@ You might think that it isn't very useful, because you could just as well write 
 instead of `Telemetry.execute/3` call - and you would be right! But now imagine that each Elixir library
 would publish its own set of events with information useful for introspection. Currently each library
 rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
-cases across whole ecosystem.
+cases across the whole ecosystem.
 
 In order to provide uniform events that capture the start and end of discrete events, it is recommended
 that you use the `telemetry:span/3` call. This function will generate a start event and a stop or exception
