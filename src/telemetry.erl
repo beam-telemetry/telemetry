@@ -155,19 +155,20 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% However, note that in case the current processes crashes due to an exit signal
 %% of another process, then none or only part of those events would be emitted.
 %% Below is a breakdown of the measurements and metadata associated with each individual event.
-%% 
-%% When providing `StartMetadata` and `StopMetadata`, these values will be sent independently to `start` and
-%% `stop` events. If an exception occurs, exception metadata will be merged onto the `StartMetadata`. In general,
-%% `StopMetadata` should only provide values that are additive to `StartMetadata` so that handlers, such as those
-%% used for metrics, can rely entirely on the `stop` event.
 %%
-%% A default span context is added to event metadata under the `telemetry_span_context` key if none is provided by
-%% the user in the `StartMetadata`. This context is useful for tracing libraries to identify unique
+%% When providing `StartMetadata' and `StopMetadata', these values will be sent independently to `start' and
+%% `stop' events. If an exception occurs, exception metadata will be merged onto the `StartMetadata'. In general,
+%% `StopMetadata' should only provide values that are additive to `StartMetadata' so that handlers, such as those
+%% used for metrics, can rely entirely on the `stop' event.
+%%
+%% A default span context is added to event metadata under the `telemetry_span_context' key if none is provided by
+%% the user in the `StartMetadata'. This context is useful for tracing libraries to identify unique
 %% executions of span events within a process to match start, stop, and exception events. Users
 %% should ensure this value is unique within the context of a process at a minimum if overriding this key and
-%% that the same value is provided to both `StartMetadata` and `StopMetadata`.
+%% that the same value is provided to both `StartMetadata' and `StopMetadata'.
 %%
-%% For `telemetry` events denoting the <strong>start</strong> of a larger event, the following data is provided:
+%% For `telemetry' events denoting the <strong>start</strong> of a larger event, the following data is provided:
+%%
 %% <p>
 %% <ul>
 %% <li>
