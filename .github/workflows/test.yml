@@ -13,6 +13,7 @@ jobs:
     name: Test on OTP ${{ matrix.otp_version }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         otp_version: ["24.0", "23.3.1", "22.3.4.9", "21.3.8.17"]
         os: [ubuntu-latest]
@@ -20,9 +21,10 @@ jobs:
       OTP_VERSION: ${{ matrix.otp_version }}
     steps:
       - uses: actions/checkout@v2
-      - uses: gleam-lang/setup-erlang@v1.1.2
+      - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp_version }}
+          rebar3-version: 3.6.1
       - uses: actions/cache@v2
         name: Cache
         with:
@@ -37,27 +39,5 @@ jobs:
         run: rebar3 ct --cover
       - name: XRef
         run: rebar3 xref
-  dialyzer:
-    name: Dialyze on OTP ${{ matrix.otp_version }} and ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        otp_version: ["24.0", "23.3.1", "22.3.4.9", "21.3.8.17"]
-        os: [ubuntu-latest]
-    steps:
-      - uses: actions/checkout@v2
-      - uses: gleam-lang/setup-erlang@v1.1.2
-        with:
-          otp-version: ${{ matrix.otp_version }}
-      - uses: actions/cache@v2
-        name: Cache
-        with:
-          path: |
-            _build
-          key: ${{ runner.os }}-dialyzer-${{ matrix.otp_version }}-${{ hashFiles('rebar.lock') }}-1
-          restore-keys: |
-            ${{ runner.os }}-dialyzer-${{ matrix.otp_version }}-1-
-      - name: Compile
-        run: rebar3 compile
       - name: Dialyzer
         run: rebar3 dialyzer
