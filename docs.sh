@@ -12,4 +12,4 @@ rebar3 as docs edoc
 version=0.4.3
 ex_doc "telemetry" $version "_build/default/lib/telemetry/ebin" \
   --source-ref v${version} \
-  --config docs.exs $@
+  --config docs.config $@
