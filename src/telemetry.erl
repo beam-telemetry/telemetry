@@ -16,6 +16,8 @@
          execute/3,
          span/3]).
 
+-export([report_cb/1]).
+
 -include("telemetry.hrl").
 
 -type handler_id() :: term().
@@ -44,6 +46,8 @@
               handler/0,
               span_result/0,
               span_function/0]).
+
+-import_lib("kernel/import/logger.hrl").
 
 %% @doc Attaches the handler to the event.
 %%
@@ -91,6 +95,17 @@ attach(HandlerId, EventName, Function, Config) ->
       Config :: handler_config().
 attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 4) ->
     assert_event_names(EventNames),
+    case erlang:fun_info(Function, type) of
+        {type, external} ->
+            ok;
+        {type, local} ->
+            ?LOG_INFO(#{handler_id => HandlerId,
+                        event_names => EventNames,
+                        function => Function,
+                        config => Config,
+                        type => local},
+                      #{report_cb => fun ?MODULE:report_cb/1})
+    end,
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
 
 %% @doc Removes the existing handler.
@@ -345,3 +360,12 @@ assert_event_name(Term) ->
 -spec merge_ctx(event_metadata(), any()) -> event_metadata().
 merge_ctx(#{telemetry_span_context := _} = Metadata, _Ctx) -> Metadata;
 merge_ctx(Metadata, Ctx) -> Metadata#{telemetry_span_context => Ctx}.
+
+%% @hidden
+report_cb(#{handler_id := Id}) ->
+    {"Function passed as a handler with ID ~w is local function.\n"
+     "This mean that it is either anonymous function or capture of function "
+     "without module specified. That may cause performance penalty when calling "
+     "such handler. For more details see note in `telemetry:attach/4` "
+     "documentation.\n\n"
+     "https://hexdocs.pm/telemetry/telemetry.html#attach-4", [Id]}.

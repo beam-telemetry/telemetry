@@ -14,7 +14,7 @@ all() ->
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
      off_execute, invoke_successful_span_handlers, invoke_exception_span_handlers,
-     spans_generate_unique_default_contexts].
+     spans_generate_unique_default_contexts, logs_on_local_function].
 
 init_per_suite(Config) ->
     application:ensure_all_started(telemetry),
@@ -403,6 +403,34 @@ spans_generate_unique_default_contexts(Config) ->
         1000 -> ct:fail(timeout_receive_echo)
     end.
 
+logs_on_local_function(Config) ->
+    HandlerId = ?config(id, Config),
+    Event = [some, action],
+
+    OldConfig = logger:get_primary_config(),
+    logger:add_primary_filter(logs_on_local_function, {fun ?MODULE:send_logs/2,
+                                                       self()}),
+    logger:update_primary_config(#{level => info}),
+
+    try
+        telemetry:attach(HandlerId, Event, fun raise_on_event/4, []),
+        receive
+            {log, #{msg := {report, #{handler_id := HandlerId}}}} -> ok
+        after
+            1000 -> ct:fail(timeout_receive_log)
+        end,
+
+        Fun = fun(_Event, _Measurements, _Meta, _Config) -> ok end,
+        telemetry:attach(HandlerId, Event, Fun, []),
+        receive
+            {log, #{msg := {report, #{handler_id := HandlerId}}}} -> ok
+        after
+            1000 -> ct:fail(timeout_receive_log)
+        end
+    after
+        logger:set_primary_config(OldConfig)
+    end.
+
 % Ensure calling execute is safe when the telemetry application is off
 off_execute(_Config) ->
     application:stop(telemetry),
@@ -414,3 +442,7 @@ echo_event(Event, Measurements, Metadata, #{send_to := Pid} = Config) ->
 
 raise_on_event(_, _, _, _) ->
     throw(got_event).
+
+send_logs(Event, Pid) ->
+    Pid ! {log, Event},
+    ignore.
