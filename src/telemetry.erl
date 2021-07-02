@@ -115,7 +115,7 @@ detach(HandlerId) ->
 %%
 %% <p>
 %% While you are able to emit messages of any `event_name' structure, it is recommended that you follow the
-%% the guidelines laid out in `span/3' if you are capturing start/stop events.
+%% the guidelines laid out in {@link span/3} if you are capturing start/stop events.
 %% </p>
 -spec execute(EventName, Measurements, Metadata) -> ok when
       EventName :: event_name(),
@@ -145,7 +145,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 
 %% @doc Emit start, and stop/exception events, invoking the handlers attached to each.
 %%
-%% When this function is called, 2 events will be emitted via `execute/3'. Those events will be one of the following
+%% When this function is called, 2 events will be emitted via {@link execute/3}. Those events will be one of the following
 %% pairs:
 %% <ul>
 %% <li>`EventPrefix ++ [start]' and  `EventPrefix ++ [stop]'</li>
@@ -298,7 +298,7 @@ execute(EventName, Measurements) ->
 
 %% @doc Returns all handlers attached to events with given prefix.
 %%
-%% Handlers attached to many events at once using `attach_many/4' will be listed once for each
+%% Handlers attached to many events at once using {@link attach_many/4} will be listed once for each
 %% event they're attached to.
 %% Note that you can list all handlers by feeding this function an empty list.
 -spec list_handlers(event_prefix()) -> [handler()].
