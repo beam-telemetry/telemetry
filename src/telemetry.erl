@@ -163,7 +163,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% When this function is called, 2 events will be emitted via {@link execute/3}. Those events will be one of the following
 %% pairs:
 %% <ul>
-%% <li>`EventPrefix ++ [start]' and  `EventPrefix ++ [stop]'</li>
+%% <li>`EventPrefix ++ [start]' and `EventPrefix ++ [stop]'</li>
 %% <li>`EventPrefix ++ [start]' and `EventPrefix ++ [exception]'</li>
 %% </ul>
 %%
