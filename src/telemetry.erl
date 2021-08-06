@@ -368,4 +368,4 @@ report_cb(#{handler_id := Id}) ->
      "without module specified. That may cause performance penalty when calling "
      "such handler. For more details see note in `telemetry:attach/4` "
      "documentation.\n\n"
-     "https://hexdocs.pm/telemetry/telemetry.html#attach-4", [Id]}.
+     "https://hexdocs.pm/telemetry/telemetry.html#attach/4", [Id]}.
