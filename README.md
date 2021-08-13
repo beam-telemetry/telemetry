@@ -15,6 +15,8 @@ custom handlers.
 > [opentelemetry_telemetry](https://github.com/opentelemetry-beam/opentelemetry_telemetry)
 > to connect both libraries.
 
+## Usage
+
 In a nutshell, you register a custom module and function to be invoked for certain events,
 which are executed whenever there is such event. Event name is a list of atoms. Each event is
 composed of a numeric value and can have metadata attached to it. Let's see an example.
@@ -108,6 +110,8 @@ instead of `telemetry:execute/3` call - and you would be right! But now imagine 
 would publish its own set of events with information useful for introspection. Currently each library
 rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
 cases across the whole ecosystem.
+
+### Spans
 
 In order to provide uniform events that capture the start and end of discrete events, it is recommended
 that you use the `telemetry:span/3` call. This function will generate a start event and a stop or exception
@@ -221,8 +225,6 @@ handle_event(Event, Measurements, Metadata, _Config) ->
   ?LOG_INFO("Measurements: ~p", [Measurements]),
   ?LOG_INFO("Metadata: ~p", [Metadata]).
 ```
-
-See [the documentation](https://hexdocs.pm/telemetry/) for more details.
 
 ## Installation
 
