@@ -4,8 +4,9 @@
 
 [Documentation](https://hexdocs.pm/telemetry/)
 
-Telemetry is a dynamic dispatching library for metrics and instrumentations. It is lightweight,
-small and can be used in any Erlang or Elixir project.
+Telemetry is a lightweight library for dynamic dispatching of events, with a focus on metrics and instrumentation. Any Erlang or Elixir library can use `telemetry` to emit events. Application code and other libraries can then hook into those events and run custom handlers.
+
+> Note: this library is agnostic to tooling and therefore is not directly related to OpenTelemetry. For OpenTelemetry in the Erlang VM, see [opentelemetry-erlang](https://github.com/open-telemetry/opentelemetry-erlang), and check [opentelemetry_telemetry](https://github.com/opentelemetry-beam/opentelemetry_telemetry) to connect both libraries.
 
 In a nutshell, you register a custom module and function to be invoked for certain events,
 which are executed whenever there is such event. Event name is a list of atoms. Each event is
