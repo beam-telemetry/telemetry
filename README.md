@@ -62,7 +62,7 @@ In Erlang:
 ```erlang
 -module(log_response_handler).
 
--include_lib("kernel/include/logger.hrl")
+-include_lib("kernel/include/logger.hrl").
 
 handle_event([web, request, done], #{latency := Latency}, #{request_path := Path,
                                                             status_code := Status}, _Config) ->
@@ -72,7 +72,10 @@ handle_event([web, request, done], #{latency := Latency}, #{request_path := Path
 
 **Important note:**
 
-The `handle_event` callback of each handler is invoked synchronously on each `telemetry:execute` call. Therefore, it is extremely important to avoid blocking operations. If you need to perform any action that it is not immediate, consider offloading the work to a separate process (or a pool of processes) by sending a message.
+The `handle_event` callback of each handler is invoked synchronously on each `telemetry:execute` call.
+Therefore, it is extremely important to avoid blocking operations. If you need to perform any action
+that it is not immediate, consider offloading the work to a separate process (or a pool of processes)
+by sending a message.
 
 Finally, all you need to do is to attach the module to the executed event.
 
@@ -101,7 +104,7 @@ ok = telemetry:attach(
 ```
 
 You might think that it isn't very useful, because you could just as well write a log statement
-instead of `Telemetry.execute/3` call - and you would be right! But now imagine that each Elixir library
+instead of `telemetry:execute/3` call - and you would be right! But now imagine that each Elixir library
 would publish its own set of events with information useful for introspection. Currently each library
 rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
 cases across the whole ecosystem.
@@ -211,7 +214,7 @@ In Erlang:
 ```erlang
 -module(log_response_handler).
 
--include_lib("kernel/include/logger.hrl")
+-include_lib("kernel/include/logger.hrl").
 
 handle_event(Event, Measurements, Metadata, _Config) ->
   ?LOG_INFO("Event: ~p", [Event]),
