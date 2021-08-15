@@ -198,7 +198,8 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% #{
 %%   % The current system time in native units from
 %%   % calling: erlang:system_time()
-%%   system_time => integer()
+%%   system_time => integer(),
+%%   monotonic_time => integer(),
 %% }
 %% '''
 %% </li>
@@ -230,7 +231,8 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% #{
 %%   % The current monotonic time minus the start monotonic time in native units
 %%   % by calling: erlang:monotonic_time() - start_monotonic_time
-%%   duration => integer()
+%%   duration => integer(),
+%%   monotonic_time => integer()
 %% }
 %% '''
 %% </li>
@@ -265,7 +267,8 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% #{
 %%   % The current monotonic time minus the start monotonic time in native units
 %%   % derived by calling: erlang:monotonic_time() - start_monotonic_time
-%%   duration => integer()
+%%   duration => integer(),
+%%   monotonic_time => integer()
 %% }
 %% '''
 %% </li>
@@ -288,17 +291,27 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 span(EventPrefix, StartMetadata, SpanFunction) ->
     StartTime = erlang:monotonic_time(),
     DefaultCtx = erlang:make_ref(),
-    execute(EventPrefix ++ [start], #{system_time => erlang:system_time()}, merge_ctx(StartMetadata, DefaultCtx)),
+    execute(
+        EventPrefix ++ [start],
+        #{monotonic_time => StartTime, system_time => erlang:system_time()},
+        merge_ctx(StartMetadata, DefaultCtx)
+    ),
 
     try {_, #{}} = SpanFunction() of
       {Result, StopMetadata} ->
-          execute(EventPrefix ++ [stop], #{duration => erlang:monotonic_time() - StartTime}, merge_ctx(StopMetadata, DefaultCtx)),
+          StopTime = erlang:monotonic_time(),
+          execute(
+              EventPrefix ++ [stop],
+              #{duration => StopTime - StartTime, monotonic_time => StopTime},
+              merge_ctx(StopMetadata, DefaultCtx)
+          ),
           Result
     catch
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
+            StopTime = erlang:monotonic_time(),
             execute(
                 EventPrefix ++ [exception],
-                #{duration => erlang:monotonic_time() - StartTime},
+                #{duration => StopTime - StartTime, monotonic_time => StopTime},
                 merge_ctx(StartMetadata#{kind => Class, reason => Reason, stacktrace => Stacktrace}, DefaultCtx)
             ),
             erlang:raise(Class, Reason, Stacktrace)
