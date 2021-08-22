@@ -205,7 +205,7 @@ handler_on_multiple_events(Config) ->
                           end
                   end, [Event1, Event2, Event3]).
 
-%% handler attached to many events at once is detached on failure of any invokation
+%% handler attached to many events at once is detached on failure of any invocation
 remove_all_handler_on_failure(Config) ->
     HandlerId = ?config(id, Config),
     Event1 = [a, first, event],
