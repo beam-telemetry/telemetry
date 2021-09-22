@@ -376,9 +376,9 @@ merge_ctx(Metadata, Ctx) -> Metadata#{telemetry_span_context => Ctx}.
 
 %% @hidden
 report_cb(#{handler_id := Id}) ->
-    {"Function passed as a handler with ID ~w is local function.\n"
-     "This mean that it is either anonymous function or capture of function "
-     "without module specified. That may cause performance penalty when calling "
-     "such handler. For more details see note in `telemetry:attach/4` "
+    {"The function passed as a handler with ID ~w is a local function.\n"
+     "This means that it is either an anonymous function or a capture of a function "
+     "without a module specified. That may cause a performance penalty when calling "
+     "that handler. For more details see the note in `telemetry:attach/4` "
      "documentation.\n\n"
      "https://hexdocs.pm/telemetry/telemetry.html#attach/4", [Id]}.
