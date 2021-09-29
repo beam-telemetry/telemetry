@@ -63,7 +63,7 @@
 %% or `&handle_event/4' ) as event handlers.
 %%
 %% All the handlers are executed by the process dispatching event. If the function fails (raises,
-%% exits or throws) then the handler is removed.
+%% exits or throws) then the handler is removed and a failure event is emitted.
 %% Note that you should not rely on the order in which handlers are invoked.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
@@ -86,7 +86,10 @@ attach(HandlerId, EventName, Function, Config) ->
 %% or `&handle_event/4' ) as event handlers.
 %%
 %% All the handlers are executed by the process dispatching event. If the function fails (raises,
-%% exits or throws) then the handler is removed.
+%% exits or throws) a handler failure event is emitted and then the handler is removed.
+%% Handler failure events `[telemetry, handler, failure]` should only be used for monitoring
+%% and diagnostic purposes. Re-attaching a failed handler will likely result in the handler
+%% failing again.
 %% Note that you should not rely on the order in which handlers are invoked.
 -spec attach_many(HandlerId, [EventName], Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
@@ -151,6 +154,13 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
             catch
                 ?WITH_STACKTRACE(Class, Reason, Stacktrace)
                     detach(HandlerId),
+                    FailureMetadata = #{event_name => EventName,
+                                      handler_id => HandlerId,
+                                      handler_config => Config,
+                                      class => Class,
+                                      reason => Reason,
+                                      stacktrace => Stacktrace},
+                    execute([telemetry, handler, failure], #{count => 1}, FailureMetadata),
                     ?LOG_ERROR("Handler ~p has failed and has been detached. "
                                "Class=~p~nReason=~p~nStacktrace=~p~n",
                                [HandlerId, Class, Reason, Stacktrace])
