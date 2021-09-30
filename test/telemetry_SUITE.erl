@@ -125,7 +125,7 @@ detach_on_exception(Config) ->
             ?assertMatch(#{event_name := Event,
                            handler_id := HandlerId,
                            handler_config := HandlerConfig,
-                           class := throw,
+                           kind := throw,
                            reason := got_event,
                            stacktrace := [_ | _]},
                          FailureMetadata),
