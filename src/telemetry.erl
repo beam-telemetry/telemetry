@@ -167,7 +167,8 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
                                         kind => Class,
                                         reason => Reason,
                                         stacktrace => Stacktrace},
-                    execute([telemetry, handler, failure], #{}, FailureMetadata),
+                    FailureMeasurements = #{monotonic_time => erlang:monotonic_time(), system_time => erlang:system_time()},
+                    execute([telemetry, handler, failure], FailureMeasurements, FailureMetadata),
                     ?LOG_ERROR("Handler ~p has failed and has been detached. "
                                "Class=~p~nReason=~p~nStacktrace=~p~n",
                                [HandlerId, Class, Reason, Stacktrace])
