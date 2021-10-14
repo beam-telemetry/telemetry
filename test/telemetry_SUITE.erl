@@ -97,20 +97,43 @@ list_for_prefix(Config) ->
 
      ?assertEqual([], telemetry:list_handlers(Event ++ [something])).
 
-%% handler function is detached when it fails
+%% handler function is detached when it fails and failure event is emitted
 detach_on_exception(Config) ->
     HandlerId = ?config(id, Config),
     Event = [a, test, event],
     HandlerFun = fun ?MODULE:raise_on_event/4,
-    telemetry:attach(HandlerId, Event, HandlerFun, []),
+    HandlerConfig = [],
+
+    FailureHandlerId = failure_handler_id,
+    FailureEvent = [telemetry, handler, failure],
+    FailureHandlerConfig = #{send_to => self()},
+    FailureHandlerFun = fun ?MODULE:echo_event/4,
+
+    telemetry:attach(HandlerId, Event, HandlerFun, HandlerConfig),
+    telemetry:attach(FailureHandlerId, FailureEvent, FailureHandlerFun, FailureHandlerConfig),
 
     ?assertMatch([#{id := HandlerId,
                     event_name := Event,
                     function := HandlerFun,
-                    config := []}],
+                    config := HandlerConfig}],
                  telemetry:list_handlers(Event)),
 
     telemetry:execute(Event, #{some => 1}, #{some => metadata}),
+
+    receive
+        {event, FailureEvent, _FailureMeasurements, FailureMetadata, FailureHandlerConfig} ->
+            ?assertMatch(#{event_name := Event,
+                           handler_id := HandlerId,
+                           handler_config := HandlerConfig,
+                           kind := throw,
+                           reason := got_event,
+                           stacktrace := [_ | _]},
+                         FailureMetadata),
+            ok
+    after
+        300 ->
+            ct:fail(failure_event_not_emitted)
+    end,
 
     ?assertEqual([], telemetry:list_handlers(Event)),
 
