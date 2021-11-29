@@ -176,7 +176,9 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
         end,
     lists:foreach(ApplyFun, Handlers).
 
-%% @doc Emit start, and stop/exception events, invoking the handlers attached to each.
+%% @doc Runs the provided `SpanFunction', emitting start and stop/exception events, invoking the handlers attached to each.
+%%
+%% The `SpanFunction' must return a tuple `{result, stop_metadata}'.
 %%
 %% When this function is called, 2 events will be emitted via {@link execute/3}. Those events will be one of the following
 %% pairs:
@@ -185,7 +187,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% <li>`EventPrefix ++ [start]' and `EventPrefix ++ [exception]'</li>
 %% </ul>
 %%
-%% However, note that in case the current processes crashes due to an exit signal
+%% However, note that in case the current process crashes due to an exit signal
 %% of another process, then none or only part of those events would be emitted.
 %% Below is a breakdown of the measurements and metadata associated with each individual event.
 %%
@@ -226,7 +228,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% ```
 %% #{
 %%   telemetry_span_context => term(),
-%%   % User defined metadata
+%%   % User defined metadata as provided in StartMetadata
 %%   ...
 %% }
 %% '''
@@ -259,10 +261,10 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %% ```
 %% #{
 %%   % An optional error field if the stop event is the result of an error
-%%   % but not necessarily an exception. Additional user defined metadata can
-%%   % also be added here.
+%%   % but not necessarily an exception.
 %%   error => term(),
 %%   telemetry_span_context => term(),
+%%   % User defined metadata as provided in StopMetadata
 %%   ...
 %% }
 %% '''
@@ -298,7 +300,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 %%   reason => term(),
 %%   stacktrace => list(),
 %%   telemetry_span_context => term(),
-%%   % User defined metadata from the start event
+%%   % User defined metadata as provided in StartMetadata
 %%    ...
 %% }
 %% '''
