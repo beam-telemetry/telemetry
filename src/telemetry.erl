@@ -178,7 +178,7 @@ execute(EventName, Measurements, Metadata) when is_map(Measurements) and is_map(
 
 %% @doc Runs the provided `SpanFunction', emitting start and stop/exception events, invoking the handlers attached to each.
 %%
-%% The `SpanFunction' must return a tuple `{result, stop_metadata}'.
+%% The `SpanFunction' must return a `{result, stop_metadata}' tuple.
 %%
 %% When this function is called, 2 events will be emitted via {@link execute/3}. Those events will be one of the following
 %% pairs:
