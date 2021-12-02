@@ -4,7 +4,7 @@ defmodule Telemetry.MixProject do
   use Mix.Project
 
   {:ok, [{:application, :telemetry, props}]} = :file.consult("src/telemetry.app.src")
-  @props props
+  @props Keyword.take(props, [:applications, :description, :env, :mod, :vsn])
 
   def application do
     @props
