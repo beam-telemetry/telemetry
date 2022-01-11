@@ -65,7 +65,7 @@
 %% All the handlers are executed by the process dispatching event. If the function fails (raises,
 %% exits or throws) then the handler is removed and a failure event is emitted.
 %%
-%% Handler failure events `[telemetry, handler, failure]` should only be used for monitoring
+%% Handler failure events `[telemetry, handler, failure]' should only be used for monitoring
 %% and diagnostic purposes. Re-attaching a failed handler will likely result in the handler
 %% failing again.
 %%
@@ -93,7 +93,7 @@ attach(HandlerId, EventName, Function, Config) ->
 %% All the handlers are executed by the process dispatching event. If the function fails (raises,
 %% exits or throws) a handler failure event is emitted and then the handler is removed.
 %%
-%% Handler failure events `[telemetry, handler, failure]` should only be used for monitoring
+%% Handler failure events `[telemetry, handler, failure]' should only be used for monitoring
 %% and diagnostic purposes. Re-attaching a failed handler will likely result in the handler
 %% failing again.
 %%
