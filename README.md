@@ -18,8 +18,8 @@ custom handlers.
 ## Usage
 
 In a nutshell, you register a custom module and function to be invoked for certain events,
-which are executed whenever there is such event. Event name is a list of atoms. Each event is
-composed of a numeric value and can have metadata attached to it. Let's see an example.
+which are executed whenever there is such an event. The event name is a list of atoms. Each event is
+composed of a numeric value and can have metadata attached to it. Let's look at an example.
 
 Imagine that you have a web application and you'd like to log latency and response status for each
 incoming request. With Telemetry, you can build a module which does exactly that whenever a response
@@ -54,7 +54,9 @@ defmodule LogResponseHandler do
   require Logger
 
   def handle_event([:web, :request, :done], measurements, metadata, _config) do
-    Logger.info("[#{metadata.request_path}] #{metadata.status_code} sent in #{measurements.latency}")
+    Logger.info(
+      "[#{metadata.request_path}] #{metadata.status_code} sent in #{measurements.latency}"
+    )
   end
 end
 ```
@@ -76,7 +78,7 @@ handle_event([web, request, done], #{latency := Latency}, #{request_path := Path
 
 The `handle_event` callback of each handler is invoked synchronously on each `telemetry:execute` call.
 Therefore, it is extremely important to avoid blocking operations. If you need to perform any action
-that it is not immediate, consider offloading the work to a separate process (or a pool of processes)
+that is not immediate, consider offloading the work to a separate process (or a pool of processes)
 by sending a message.
 
 Finally, all you need to do is to attach the module to the executed event.
@@ -84,13 +86,14 @@ Finally, all you need to do is to attach the module to the executed event.
 In Elixir:
 
 ```elixir
-:ok = :telemetry.attach(
-  # unique handler id
-  "log-response-handler",
-  [:web, :request, :done],
-  &LogResponseHandler.handle_event/4,
-  nil
-)
+:ok =
+  :telemetry.attach(
+    # unique handler id
+    "log-response-handler",
+    [:web, :request, :done],
+    &LogResponseHandler.handle_event/4,
+    nil
+  )
 ```
 
 In Erlang:
@@ -106,24 +109,24 @@ ok = telemetry:attach(
 ```
 
 You might think that it isn't very useful, because you could just as well write a log statement
-instead of `telemetry:execute/3` call - and you would be right! But now imagine that each Elixir library
+instead of calling `telemetry:execute/3` – and you would be right! But now imagine that each Elixir library
 would publish its own set of events with information useful for introspection. Currently each library
-rolls their own instrumentation layer - Telemetry aims to provide a single interface for these use
+rolls their own instrumentation layer – Telemetry aims to provide a single interface for these use
 cases across the whole ecosystem.
 
 ### Spans
 
 In order to provide uniform events that capture the start and end of discrete events, it is recommended
 that you use the `telemetry:span/3` call. This function will generate a start event and a stop or exception
-event depending on whether the provided function successfully executed or raised and error. Under the hood,
+event depending on whether the provided function executed successfully or raised an error. Under the hood,
 the `telemetry:span/3` function leverages the `telemetry:execute/3` function, so all the same usage patterns
 apply. If an exception does occur, an `EventPrefix ++ [exception]` event will be emitted and the caught error
 will be re-raised.
 
 The measurements for the `EventPrefix ++ [start]` event will contain a key called `system_time` which is
 derived by calling `erlang:system_time()`. For `EventPrefix ++ [stop]` and `EventPrefix ++ [exception]`
-events, the measurements will contain a key called `duration`, whose value is derived by calling
-`erlang:monotonic_time() - StartMonotonicTime`. All events include a `monotonic_time` measurements too.
+events, the measurements will contain a key called `duration` and its value is derived by calling
+`erlang:monotonic_time() - StartMonotonicTime`. All events include a `monotonic_time` measurement too.
 All of them represent time as native units.
 
 To convert the duration from native units you can use:
@@ -132,21 +135,23 @@ To convert the duration from native units you can use:
 milliseconds = System.convert_time_unit(duration, :native, :millisecond)
 ```
 
-To create span events, you would do something like so:
+To create span events you would do something like this:
 
 In Elixir:
 
 ```elixir
 def process_message(message) do
   start_metadata = %{message: message}
-  result = :telemetry.span(
-    [:worker, :processing],
-    start_metadata,
-    fn ->
-      result = # Process the message
-      {result, %{metadata: "Information related to the processing of the message"}}
-    end
-  )
+
+  result =
+    :telemetry.span(
+      [:worker, :processing],
+      start_metadata,
+      fn ->
+        # Process the message
+        result = {result, %{metadata: "Information related to the processing of the message"}}
+      end
+    )
 end
 ```
 
@@ -170,16 +175,17 @@ To then attach to the events that `telemetry:span/3` emits you would do the foll
 In Elixir:
 
 ```elixir
-:ok = :telemetry.attach_many(
-  "log-response-handler",
-  [
-    [:worker, :processing, :start],
-    [:worker, :processing, :stop],
-    [:worker, :processing, :exception]
-  ],
-  &LogResponseHandler.handle_event/4,
-  nil
-)
+:ok =
+  :telemetry.attach_many(
+    "log-response-handler",
+    [
+      [:worker, :processing, :start],
+      [:worker, :processing, :stop],
+      [:worker, :processing, :exception]
+    ],
+    &LogResponseHandler.handle_event/4,
+    nil
+  )
 ```
 
 In Erlang:
@@ -247,8 +253,8 @@ or `rebar.config`:
 
 ## Copyright and License
 
-Telemetry is copyright (c) 2018 Chris McCord and Erlang Solutions.
+Copyright (c) 2018 Chris McCord and Erlang Solutions.
 
-Telemetry source code is released under Apache License, Version 2.0.
+Telemetry's source code is released under the Apache License, Version 2.0.
 
-See [LICENSE](LICENSE) and [NOTICE](NOTICE) files for more information.
+See the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for more information.
