@@ -148,8 +148,8 @@ def process_message(message) do
       [:worker, :processing],
       start_metadata,
       fn ->
-        # Process the message
-        result = {result, %{metadata: "Information related to the processing of the message"}}
+        result = ... # Process the message
+        {result, %{metadata: "Information related to the processing of the message"}}
       end
     )
 end
