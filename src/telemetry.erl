@@ -394,7 +394,7 @@ assert_event_name(Term) ->
 merge_ctx(#{telemetry_span_context := _} = Metadata, _Ctx) -> Metadata;
 merge_ctx(Metadata, Ctx) -> Metadata#{telemetry_span_context => Ctx}.
 
-%% @hidden
+%% @private
 report_cb(#{handler_id := Id}) ->
     {"The function passed as a handler with ID ~w is a local function.\n"
      "This means that it is either an anonymous function or a capture of a function "
