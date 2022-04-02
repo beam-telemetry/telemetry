@@ -12,5 +12,6 @@
 
   {licenses, ["Apache-2.0"]},
   {links, [{"Github", "https://github.com/beam-telemetry/telemetry"}]},
-  {doc, "doc"}
+  {doc, "doc"},
+  {include_files, ["mix.exs"]}
  ]}.
