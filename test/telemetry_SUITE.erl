@@ -9,7 +9,7 @@
 
 all() ->
     [bad_event_names, duplicate_attach, invoke_handler,
-     list_handlers, list_for_prefix, detach_on_exception,
+     list_handlers, list_for_prefix, detach_on_exception, durable_handler_on_exception,
      no_execute_detached, no_execute_on_prefix, no_execute_on_specific,
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
@@ -159,6 +159,51 @@ no_execute_detached(Config) ->
         300 ->
             ok
     end.
+
+%% handler function is not detached when is durable and it fails, but a failure event is emitted
+durable_handler_on_exception(Config) ->
+    HandlerId = ?config(id, Config),
+    Event = [a, test, event],
+    HandlerFun = fun ?MODULE:raise_on_event/4,
+    HandlerConfig = [],
+    HandlerOptions = #{durable => true},
+
+    FailureHandlerId = durable_failure_handler_id,
+    FailureEvent = [telemetry, handler, failure],
+    FailureHandlerConfig = #{send_to => self()},
+    FailureHandlerFun = fun ?MODULE:echo_event/4,
+
+    telemetry:attach(HandlerId, Event, HandlerFun, HandlerConfig, HandlerOptions),
+    telemetry:attach(FailureHandlerId, FailureEvent, FailureHandlerFun, FailureHandlerConfig),
+
+    ?assertMatch([#{id := HandlerId,
+                    event_name := Event,
+                    function := HandlerFun,
+                    config := HandlerConfig}],
+                 telemetry:list_handlers(Event)),
+
+    telemetry:execute(Event, #{some => 1}, #{some => metadata}),
+
+    receive
+        {event, FailureEvent, _FailureMeasurements, FailureMetadata, FailureHandlerConfig} ->
+            ?assertMatch(#{event_name := Event,
+                           handler_id := HandlerId,
+                           handler_config := HandlerConfig,
+                           kind := throw,
+                           reason := got_event,
+                           stacktrace := [_ | _]},
+                         FailureMetadata),
+            ok
+    after
+        300 ->
+            ct:fail(failure_event_not_emitted)
+    end,
+
+    ?assertMatch([#{id := HandlerId,
+                    event_name := Event,
+                    function := HandlerFun,
+                    config := HandlerConfig}],
+                 telemetry:list_handlers(Event)).
 
 %% handler is not invoked when prefix of the event it's attached to is emitted
 no_execute_on_prefix(Config) ->

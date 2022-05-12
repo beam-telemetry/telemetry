@@ -9,7 +9,9 @@
 -module(telemetry).
 
 -export([attach/4,
+         attach/5,
          attach_many/4,
+         attach_many/5,
          detach/1,
          list_handlers/1,
          execute/2,
@@ -27,13 +29,15 @@
 -type event_value() :: number().
 -type event_prefix() :: [atom()].
 -type handler_config() :: term().
+-type handler_options() :: map().
 -type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
 -type span_result() :: term().
 -type span_function() :: fun(() -> {span_result(), event_metadata()}).
 -type handler() :: #{id := handler_id(),
                      event_name := event_name(),
                      function := handler_function(),
-                     config := handler_config()}.
+                     config := handler_config(),
+                     options := handler_options()}.
 
 -export_type([handler_id/0,
               event_name/0,
@@ -70,13 +74,32 @@
 %% failing again.
 %%
 %% Note that you should not rely on the order in which handlers are invoked.
+%%
+%% See {@attach/5} to learn about additional options.
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
       Function :: handler_function(),
       Config :: handler_config().
 attach(HandlerId, EventName, Function, Config) ->
-    attach_many(HandlerId, [EventName], Function, Config).
+    attach(HandlerId, EventName, Function, Config, undefined).
+
+%% @doc Attaches the handler to the event, accepting additional options.
+%%
+%% See {@attach/4} to learn about attaching handler to the event.
+%%
+%% This function takes additional argument, `options`, which is a map with keys being atoms.
+%% Currently the only supported option is `durable`, which can be set to `true` or `false`.
+%% If the option is set to `true`, the handler is not going to be detached on first or any
+%% of the sequential failures.
+-spec attach(HandlerId, EventName, Function, Config, Options) -> ok | {error, already_exists} when
+      HandlerId :: handler_id(),
+      EventName :: event_name(),
+      Function :: handler_function(),
+      Config :: handler_config(),
+      Options :: handler_options().
+attach(HandlerId, EventName, Function, Config, Options) ->
+    attach_many(HandlerId, [EventName], Function, Config, Options).
 
 %% @doc Attaches the handler to many events.
 %%
@@ -98,12 +121,31 @@ attach(HandlerId, EventName, Function, Config) ->
 %% failing again.
 %%
 %% Note that you should not rely on the order in which handlers are invoked.
+%%
+%%%% See {@attach_many/5} to learn about additional options.
 -spec attach_many(HandlerId, [EventName], Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
       EventName :: event_name(),
       Function :: handler_function(),
       Config :: handler_config().
 attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 4) ->
+  attach_many(HandlerId, EventNames, Function, Config, undefined).
+
+%% @doc Attaches the handler to many events, accepting additional options.
+%%
+%% See {@attach_many/4} to learn about attaching handler to the events.
+%%
+%% This function takes additional argument, `options`, which is a map with keys being atoms.
+%% Currently the only supported option is `durable`, which can be set to `true` or `false`.
+%% If the option is set to `true`, the handler is not going to be detached on first or any
+%% of the sequential failures.
+-spec attach_many(HandlerId, [EventName], Function, Config, Options) -> ok | {error, already_exists} when
+      HandlerId :: handler_id(),
+      EventName :: event_name(),
+      Function :: handler_function(),
+      Config :: handler_config(),
+      Options :: handler_options().
+attach_many(HandlerId, EventNames, Function, Config, Options) when is_function(Function, 4) ->
     assert_event_names(EventNames),
     case erlang:fun_info(Function, type) of
         {type, external} ->
@@ -116,7 +158,7 @@ attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 
                         type => local},
                       #{report_cb => fun ?MODULE:report_cb/1})
     end,
-    telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
+    telemetry_handler_table:insert(HandlerId, EventNames, Function, Config, Options).
 
 %% @doc Removes the existing handler.
 %%
@@ -155,24 +197,35 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
     ApplyFun =
         fun(#handler{id=HandlerId,
                      function=HandlerFunction,
-                     config=Config}) ->
+                     config=Config,
+                     options=Options}) ->
             try
                 HandlerFunction(EventName, Measurements, Metadata, Config)
             catch
                 ?WITH_STACKTRACE(Class, Reason, Stacktrace)
-                    detach(HandlerId),
                     FailureMetadata = #{event_name => EventName,
                                         handler_id => HandlerId,
                                         handler_config => Config,
+                                        handler_options => Options,
                                         kind => Class,
                                         reason => Reason,
                                         stacktrace => Stacktrace},
                     FailureMeasurements = #{monotonic_time => erlang:monotonic_time(), system_time => erlang:system_time()},
-                    execute([telemetry, handler, failure], FailureMeasurements, FailureMetadata),
-                    ?LOG_ERROR("Handler ~p has failed and has been detached. "
-                               "Class=~p~nReason=~p~nStacktrace=~p~n",
-                               [HandlerId, Class, Reason, Stacktrace])
-            end
+
+                    case Options of
+                        #{durable := true} ->
+                            execute([telemetry, handler, failure], FailureMeasurements, FailureMetadata),
+                            ?LOG_ERROR("Durable handler ~p has failed. "
+                                       "Class=~p~nReason=~p~nStacktrace=~p~n",
+                                       [HandlerId, Class, Reason, Stacktrace]);
+                        _ ->
+                            detach(HandlerId),
+                            execute([telemetry, handler, failure], FailureMeasurements, FailureMetadata),
+                            ?LOG_ERROR("Handler ~p has failed and has been detached. "
+                                       "Class=~p~nReason=~p~nStacktrace=~p~n",
+                                       [HandlerId, Class, Reason, Stacktrace])
+                    end
+              end
         end,
     lists:foreach(ApplyFun, Handlers).
 

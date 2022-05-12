@@ -13,7 +13,7 @@
 -behaviour(gen_server).
 
 -export([start_link/0,
-         insert/4,
+         insert/5,
          delete/1,
          list_for_event/1,
          list_by_prefix/1]).
@@ -30,13 +30,14 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
--spec insert(HandlerId, EventNames, Function, Config) -> ok | {error, already_exists} when
+-spec insert(HandlerId, EventNames, Function, Config, Options) -> ok | {error, already_exists} when
       HandlerId :: telemetry:handler_id(),
       EventNames :: [telemetry:event_name()],
       Function :: telemetry:handler_function(),
-      Config :: telemetry:handler_config().
-insert(HandlerId, EventNames, Function, Config) ->
-    gen_server:call(?MODULE, {insert, HandlerId, EventNames, Function, Config}).
+      Config :: telemetry:handler_config(),
+      Options :: telemetry:handler_options().
+insert(HandlerId, EventNames, Function, Config, Options) ->
+    gen_server:call(?MODULE, {insert, HandlerId, EventNames, Function, Config, Options}).
 
 -spec delete(telemetry:handler_id()) -> ok | {error, not_found}.
 delete(HandlerId) ->
@@ -62,14 +63,15 @@ init([]) ->
     _ = create_table(),
     {ok, []}.
 
-handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
+handle_call({insert, HandlerId, EventNames, Function, Config, Options}, _From, State) ->
     case ets:match(?MODULE, #handler{id=HandlerId,
                                      _='_'}) of
         [] ->
             Objects = [#handler{id=HandlerId,
                                 event_name=EventName,
                                 function=Function,
-                                config=Config} || EventName <- EventNames],
+                                config=Config,
+                                options=Options} || EventName <- EventNames],
             ets:insert(?MODULE, Objects),
             {reply, ok, State};
         _ ->
