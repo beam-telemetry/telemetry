@@ -12,7 +12,7 @@ custom handlers.
 > Note: this library is agnostic to tooling and therefore is not directly related to
 > OpenTelemetry. For OpenTelemetry in the Erlang VM, see
 > [opentelemetry-erlang](https://github.com/open-telemetry/opentelemetry-erlang), and check
-> [opentelemetry_telemetry](https://github.com/opentelemetry-beam/opentelemetry_telemetry)
+> [opentelemetry_telemetry](https://github.com/open-telemetry/opentelemetry-erlang-contrib/tree/main/utilities/opentelemetry_telemetry)
 > to connect both libraries.
 
 ## Usage
