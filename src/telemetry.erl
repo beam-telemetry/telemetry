@@ -193,8 +193,9 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 %%
 %% When providing `StartMetadata' and `StopMetadata', these values will be sent independently to `start' and
 %% `stop' events. If an exception occurs, exception metadata will be merged onto the `StartMetadata'. In general,
-%% `StopMetadata' should only provide values that are additive to `StartMetadata' so that handlers, such as those
-%% used for metrics, can rely entirely on the `stop' event.
+%% it is <strong>highly recommended</strong> that `StopMetadata' should include the values from `StartMetadata'
+%% so that handlers, such as those used for metrics, can rely entirely on the `stop' event. Failure to include
+%% all of `StartMetadata' in `StopMetadata' can add significant complexity to event handlers.
 %%
 %% A default span context is added to event metadata under the `telemetry_span_context' key if none is provided by
 %% the user in the `StartMetadata'. This context is useful for tracing libraries to identify unique
