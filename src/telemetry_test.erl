@@ -10,7 +10,7 @@
 
 -module(telemetry_test).
 
--export([attach_message_handlers/3]).
+-export([attach_event_handlers/2]).
 
 %% @doc Attaches a "message" handler to the given events.
 %%
@@ -25,15 +25,15 @@
 %% '''
 %%
 %% You can detach this event with {link telemetry:detach/1}.
--spec attach_message_handlers(HandlerID, DestinationPID, Events) -> reference() when
-    HandlerID :: telemetry:handler_id(),
+-spec attach_event_handlers(DestinationPID, Events) -> {telemetry:handler_id(), reference()} when
     DestinationPID :: pid(),
     Events :: [telemetry:event_name(), ...].
-attach_message_handlers(HandlerID, DestPID, Events) when is_pid(DestPID) and is_list(Events) ->
+attach_event_handlers(DestPID, Events) when is_pid(DestPID) and is_list(Events) ->
     Ref = make_ref(),
+    HandlerId = crypto:strong_rand_bytes(16),
     Config = #{dest_pid => DestPID, ref => Ref},
-    telemetry:attach_many(HandlerID, Events, fun handle_event/4, Config),
-    Ref.
+    telemetry:attach_many(HandlerId, Events, fun handle_event/4, Config),
+    {HandlerId, Ref}.
 
 handle_event(Event, Measurements, Metadata, #{dest_pid := DestPID, ref := Ref}) ->
     DestPID ! {Event, Ref, Measurements, Metadata}.
