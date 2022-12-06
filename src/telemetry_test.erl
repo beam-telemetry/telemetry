@@ -14,26 +14,25 @@
 
 %% @doc Attaches a "message" handler to the given events.
 %%
-%% `handler_id` must be unique and is used as the handler ID.
-%%
 %% The attached handler sends a message to `destination_pid` every time it handles one of the
 %% events in `events`. The function returns a reference that you can use to make sure that
-%% messages come from this handler. The shape of messages sent to `destination_pid` is:
+%% messages come from this handler. This reference is also used as the handler ID, so you
+%% can use it to detach the handler with {link telemetry:detach/1}.
+%%
+%% The shape of messages sent to `destination_pid` is:
 %%
 %% ```
 %% {Event, Ref, Measurements, Metadata}
 %% '''
 %%
-%% You can detach this event with {link telemetry:detach/1}.
--spec attach_event_handlers(DestinationPID, Events) -> {telemetry:handler_id(), reference()} when
+-spec attach_event_handlers(DestinationPID, Events) -> reference() when
     DestinationPID :: pid(),
     Events :: [telemetry:event_name(), ...].
 attach_event_handlers(DestPID, Events) when is_pid(DestPID) and is_list(Events) ->
     Ref = make_ref(),
-    HandlerId = crypto:strong_rand_bytes(16),
     Config = #{dest_pid => DestPID, ref => Ref},
-    telemetry:attach_many(HandlerId, Events, fun handle_event/4, Config),
-    {HandlerId, Ref}.
+    telemetry:attach_many(Ref, Events, fun handle_event/4, Config),
+    Ref.
 
 handle_event(Event, Measurements, Metadata, #{dest_pid := DestPID, ref := Ref}) ->
     DestPID ! {Event, Ref, Measurements, Metadata}.

@@ -23,13 +23,13 @@ end_per_testcase(_, _Config) ->
 
 %% attach_event_handlers/2 works correctly.
 simple_message(_Config) ->
-    {HandlerId, Ref} = telemetry_test:attach_event_handlers(self(), [[some, event]]),
+    Ref = telemetry_test:attach_event_handlers(self(), [[some, event]]),
 
     telemetry:execute([some, event], #{measurement => 1}, #{meta => 2}),
 
     receive
         {[some, event], Ref, #{measurement := 1}, #{meta := 2}} ->
-            telemetry:detach(HandlerId)
+            telemetry:detach(Ref)
     after 1000 ->
         ct:fail(timeout_receive_attach_event_handlers)
     end.
