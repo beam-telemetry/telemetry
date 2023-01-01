@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        otp_version: ["24.0", "23.3.1", "22.3.4.9", "21.3.8.17"]
+        otp_version: ["24", "23", "22", "21"]
         os: [ubuntu-latest]
     env:
       OTP_VERSION: ${{ matrix.otp_version }}
@@ -25,7 +25,7 @@ jobs:
         with:
           otp-version: ${{ matrix.otp_version }}
           rebar3-version: 3.6.1
-          version-type: strict
+          version-type: loose
       - uses: actions/cache@v2
         name: Cache
         with:
