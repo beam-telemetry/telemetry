@@ -15,8 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        otp_version: ["24.x", "23.x", "22.x", "21.x"]
-        os: [ubuntu-latest]
+        otp_version: ["25.2", "24.3.4.7", "23.3.4.18", "22.3.4.26"]
+        os: [ubuntu-20.04]
     env:
       OTP_VERSION: ${{ matrix.otp_version }}
     steps:
