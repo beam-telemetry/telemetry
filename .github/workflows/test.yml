@@ -24,7 +24,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp_version }}
-          rebar3-version: 3.6.1
+          rebar3-version: 3.20.0
           version-type: loose
       - uses: actions/cache@v2
         name: Cache
