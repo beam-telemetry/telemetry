@@ -17,14 +17,14 @@ jobs:
       matrix:
         otp_version: ["25.2", "24.3.4.7"]
         os: [ubuntu-22.04]
-        rebar3_version: 3.20.0
+        rebar3_version: "3.20.0"
         include:
           - otp_version: "23.3.4.18"
             os: ubuntu-20.04
-            rebar3_version: 3.20.0
+            rebar3_version: "3.20.0"
           - otp_version: "22.3.4.26"
             os: ubuntu-20.04
-            rebar3_version: 3.18.0
+            rebar3_version: "3.18.0"
     env:
       OTP_VERSION: ${{ matrix.otp_version }}
     steps:
