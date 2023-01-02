@@ -25,6 +25,27 @@
 %% {Event, Ref, Measurements, Metadata}
 %% '''
 %%
+%% For example, in Erlang a test could look like this:
+%%
+%% ```
+%% Ref = telemetry_test:attach_event_handlers(self(), [[some, event]]),
+%% function_that_emits_the_event(),
+%% receive
+%%     {[some, event], Ref, #{measurement := _}, #{meta := _}} ->
+%%         telemetry:detach(Ref)
+%% after 1000 ->
+%%     ct:fail(timeout_receive_attach_event_handlers)
+%% end.
+%% '''
+%%
+%% In Elixir, a similar test would look like this:
+%%
+%% ```
+%% ref = :telemetry.attach_event_handlers(self(), [[:some, :event]])
+%% function_that_emits_the_event()
+%% assert_received {[:some, :event], ^ref, %{measurement: _}, %{meta: _}}
+%% '''
+%%
 -spec attach_event_handlers(DestinationPID, Events) -> reference() when
     DestinationPID :: pid(),
     Events :: [telemetry:event_name(), ...].
