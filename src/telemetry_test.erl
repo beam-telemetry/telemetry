@@ -41,7 +41,7 @@
 %% In Elixir, a similar test would look like this:
 %%
 %% ```
-%% ref = :telemetry.attach_event_handlers(self(), [[:some, :event]])
+%% ref = :telemetry_test.attach_event_handlers(self(), [[:some, :event]])
 %% function_that_emits_the_event()
 %% assert_received {[:some, :event], ^ref, %{measurement: _}, %{meta: _}}
 %% '''
