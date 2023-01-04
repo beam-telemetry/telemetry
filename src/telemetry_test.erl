@@ -14,12 +14,12 @@
 
 %% @doc Attaches a "message" handler to the given events.
 %%
-%% The attached handler sends a message to `destination_pid` every time it handles one of the
-%% events in `events`. The function returns a reference that you can use to make sure that
+%% The attached handler sends a message to `destination_pid' every time it handles one of the
+%% events in `events'. The function returns a reference that you can use to make sure that
 %% messages come from this handler. This reference is also used as the handler ID, so you
-%% can use it to detach the handler with {link telemetry:detach/1}.
+%% can use it to detach the handler with {@link telemetry:detach/1}.
 %%
-%% The shape of messages sent to `destination_pid` is:
+%% The shape of messages sent to `destination_pid' is:
 %%
 %% ```
 %% {Event, Ref, Measurements, Metadata}
