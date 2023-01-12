@@ -10,7 +10,7 @@
 
 -module(telemetry_test).
 
--export([attach_event_handlers/2]).
+-export([attach_event_handlers/2, handle_event/4]).
 
 %% @doc Attaches a "message" handler to the given events.
 %%
@@ -52,7 +52,7 @@
 attach_event_handlers(DestPID, Events) when is_pid(DestPID) and is_list(Events) ->
     Ref = make_ref(),
     Config = #{dest_pid => DestPID, ref => Ref},
-    telemetry:attach_many(Ref, Events, fun handle_event/4, Config),
+    telemetry:attach_many(Ref, Events, fun telemetry_test:handle_event/4, Config),
     Ref.
 
 handle_event(Event, Measurements, Metadata, #{dest_pid := DestPID, ref := Ref}) ->
