@@ -56,11 +56,11 @@
 %%
 %% See {@link execute/3} to learn how the handlers are invoked.
 %%
-%% <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
-%% function captures (i.e. `fun mod:fun/4' in Erlang or `&Mod.fun/4' in Elixir) as event handlers
-%% to achieve maximum performance. In other words, avoid using literal anonymous functions
-%% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
-%% or `&handle_event/4' ) as event handlers.
+%% `function` must be a 4 arity function. Due to how anonymous functions are implemented 
+%% in the Erlang VM, it is best to use function captures (i.e. `fun mod:fun/4' in Erlang or 
+%% `&Mod.fun/4' in Elixir) as event handlers to achieve maximum performance. In other words,
+%% avoid using literal anonymous functions (`fun(...) -> ... end' or `fn ... -> ... end') or 
+%% local function captures (`fun handle_event/4' or `&handle_event/4' ) as event handlers.
 %%
 %% All the handlers are executed by the process dispatching event. If the function fails (raises,
 %% exits or throws) then the handler is removed and a failure event is emitted.
