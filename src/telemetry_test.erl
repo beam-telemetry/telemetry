@@ -55,5 +55,6 @@ attach_event_handlers(DestPID, Events) when is_pid(DestPID) and is_list(Events) 
     telemetry:attach_many(Ref, Events, fun telemetry_test:handle_event/4, Config),
     Ref.
 
+%% @hidden
 handle_event(Event, Measurements, Metadata, #{dest_pid := DestPID, ref := Ref}) ->
     DestPID ! {Event, Ref, Measurements, Metadata}.
