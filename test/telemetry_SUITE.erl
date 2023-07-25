@@ -336,14 +336,14 @@ invoke_successful_span_handlers(Config) ->
 
     receive
         {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->
-          ?assertEqual([monotonic_time, system_time], maps:keys(StartMeasurements))
+          ?assertEqual([monotonic_time, system_time], lists:sort(maps:keys(StartMeasurements)))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end,
 
     receive
         {event, StopEvent, StopMeasurements, StopMetadata, HandlerConfig} ->
-          ?assertEqual([duration, monotonic_time], maps:keys(StopMeasurements))
+          ?assertEqual([duration, monotonic_time], lists:sort(maps:keys(StopMeasurements)))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end.
@@ -372,14 +372,14 @@ invoke_exception_span_handlers(Config) ->
 
     receive
         {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->
-          ?assertEqual([monotonic_time, system_time], maps:keys(StartMeasurements))
+          ?assertEqual([monotonic_time, system_time], lists:sort(maps:keys(StartMeasurements)))
     after
         1000 -> ct:fail(timeout_receive_echo)
     end,
 
     receive
         {event, ExceptionEvent, StopMeasurements, ExceptionMetadata, HandlerConfig} ->
-          ?assertEqual([duration, monotonic_time], maps:keys(StopMeasurements)),
+          ?assertEqual([duration, monotonic_time], lists:sort(maps:keys(StopMeasurements))),
           ?assertEqual([kind, reason, some, stacktrace, telemetry_span_context], lists:sort(maps:keys(ExceptionMetadata)))
     after
         1000 -> ct:fail(timeout_receive_echo)
