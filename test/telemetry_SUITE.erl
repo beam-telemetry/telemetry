@@ -348,6 +348,35 @@ invoke_successful_span_handlers(Config) ->
         1000 -> ct:fail(timeout_receive_echo)
     end.
 
+% Ensure that stop event includes custom measurements if provided
+invoke_successful_span_handlers_with_measurements(Config) ->
+    HandlerId = ?config(id, Config),
+    EventPrefix = [some, action],
+    StartEvent = EventPrefix ++ [start],
+    StopEvent = EventPrefix ++ [stop],
+    HandlerConfig = #{send_to => self()},
+    StartMetadata = #{some => start_metadata, telemetry_span_context => ctx},
+    StopMetadata = #{other => stop_metadata, telemetry_span_context => ctx},
+    ExtraMeasurements = #{other_thing => 100},
+    ErrorSpanFunction = fun() -> {ok, StopMetadata, ExtraMeasurements} end,
+
+    telemetry:attach_many(HandlerId, [StartEvent, StopEvent], fun ?MODULE:echo_event/4, HandlerConfig),
+    telemetry:span(EventPrefix, StartMetadata, ErrorSpanFunction),
+
+    receive
+        {event, StartEvent, StartMeasurements, StartMetadata, HandlerConfig} ->
+          ?assertEqual([monotonic_time, system_time], lists:sort(maps:keys(StartMeasurements)))
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end,
+
+    receive
+        {event, StopEvent, StopMeasurements, StopMetadata, HandlerConfig} ->
+          ?assertEqual([duration, monotonic_time, other_thing], lists:sort(maps:keys(StopMeasurements)))
+    after
+        1000 -> ct:fail(timeout_receive_echo)
+    end.
+
 % Ensure that a start and exception event are emitted during an error span call
 invoke_exception_span_handlers(Config) ->
     HandlerId = ?config(id, Config),

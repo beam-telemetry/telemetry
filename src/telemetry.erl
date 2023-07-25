@@ -29,7 +29,7 @@
 -type handler_config() :: term().
 -type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
 -type span_result() :: term().
--type span_function() :: fun(() -> {span_result(), event_metadata()}).
+-type span_function() :: fun(() -> {span_result(), event_metadata()}) | {span_result(), event_metadata(), event_measurements()}.
 -type handler() :: #{id := handler_id(),
                      event_name := event_name(),
                      function := handler_function(),
@@ -178,7 +178,7 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 
 %% @doc Runs the provided `SpanFunction', emitting start and stop/exception events, invoking the handlers attached to each.
 %%
-%% The `SpanFunction' must return a `{result, stop_metadata}' tuple.
+%% The `SpanFunction' must return a `{result, stop_metadata}' or a `{result, stop_metadata, extra_measurements}` tuple.
 %%
 %% When this function is called, 2 events will be emitted via {@link execute/3}. Those events will be one of the following
 %% pairs:
@@ -202,6 +202,10 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 %% executions of span events within a process to match start, stop, and exception events. Metadata keys, which 
 %% should be available to both `start' and `stop' events need to supplied separately for `StartMetadata' and
 %% `StopMetadata'.
+%%
+%% If `SpanFunction` is returned as `{result, stop_metadata, extra_measurements}`, then a map of extra measurements
+%% will be merged with the measurements automatically provided. This is useful if you want to return, for example, 
+%% bytes from an HTTP request. The automatic measurements, `duration` and `monotonic_time` cannot be overriden.
 %%
 %% For `telemetry' events denoting the <strong>start</strong> of a larger event, the following data is provided:
 %%
@@ -253,7 +257,8 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 %%   % The current monotonic time minus the start monotonic time in native units
 %%   % by calling: erlang:monotonic_time() - start_monotonic_time
 %%   duration => integer(),
-%%   monotonic_time => integer()
+%%   monotonic_time => integer(),
+%%   % User defined measurements when returning `SpanFunction` as a 3 element tuple
 %% }
 %% '''
 %% </li>
@@ -318,7 +323,7 @@ span(EventPrefix, StartMetadata, SpanFunction) ->
         merge_ctx(StartMetadata, DefaultCtx)
     ),
 
-    try {_, #{}} = SpanFunction() of
+    try SpanFunction() of
       {Result, StopMetadata} ->
           StopTime = erlang:monotonic_time(),
           execute(
@@ -326,7 +331,17 @@ span(EventPrefix, StartMetadata, SpanFunction) ->
               #{duration => StopTime - StartTime, monotonic_time => StopTime},
               merge_ctx(StopMetadata, DefaultCtx)
           ),
+          Result;
+      {Result, StopMetadata, ExtraMeasurements} ->
+          StopTime = erlang:monotonic_time(),
+          Measurements = maps:merge(ExtraMeasurements, #{duration => StopTime - StartTime, monotonic_time => StopTime}),
+          execute(
+              EventPrefix ++ [stop],
+              Measurements,
+              merge_ctx(StopMetadata, DefaultCtx)
+          ),
           Result
+
     catch
         ?WITH_STACKTRACE(Class, Reason, Stacktrace)
             StopTime = erlang:monotonic_time(),
