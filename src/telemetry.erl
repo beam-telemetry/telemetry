@@ -203,7 +203,7 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 %% should be available to both `start' and `stop' events need to supplied separately for `StartMetadata' and
 %% `StopMetadata'.
 %%
-%% If `SpanFunction` is returned as `{result, extra_measurements, stop_metadata}`, then a map of extra measurements
+%% If `SpanFunction` returns `{result, extra_measurements, stop_metadata}`, then a map of extra measurements
 %% will be merged with the measurements automatically provided. This is useful if you want to return, for example, 
 %% bytes from an HTTP request. The standard measurements `duration` and `monotonic_time` cannot be overridden.
 %%
