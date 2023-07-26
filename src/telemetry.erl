@@ -205,7 +205,7 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 %%
 %% If `SpanFunction` is returned as `{result, stop_metadata, extra_measurements}`, then a map of extra measurements
 %% will be merged with the measurements automatically provided. This is useful if you want to return, for example, 
-%% bytes from an HTTP request. The automatic measurements, `duration` and `monotonic_time` cannot be overriden.
+%% bytes from an HTTP request. The standard measurements `duration` and `monotonic_time` cannot be overridden.
 %%
 %% For `telemetry' events denoting the <strong>start</strong> of a larger event, the following data is provided:
 %%
