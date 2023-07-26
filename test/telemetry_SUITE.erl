@@ -358,7 +358,7 @@ invoke_successful_span_handlers_with_measurements(Config) ->
     StartMetadata = #{some => start_metadata, telemetry_span_context => ctx},
     StopMetadata = #{other => stop_metadata, telemetry_span_context => ctx},
     ExtraMeasurements = #{other_thing => 100},
-    ErrorSpanFunction = fun() -> {ok, StopMetadata, ExtraMeasurements} end,
+    ErrorSpanFunction = fun() -> {ok, ExtraMeasurements, StopMetadata} end,
 
     telemetry:attach_many(HandlerId, [StartEvent, StopEvent], fun ?MODULE:echo_event/4, HandlerConfig),
     telemetry:span(EventPrefix, StartMetadata, ErrorSpanFunction),

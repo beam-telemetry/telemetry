@@ -29,7 +29,7 @@
 -type handler_config() :: term().
 -type handler_function() :: fun((event_name(), event_measurements(), event_metadata(), handler_config()) -> any()).
 -type span_result() :: term().
--type span_function() :: fun(() -> {span_result(), event_metadata()}) | {span_result(), event_metadata(), event_measurements()}.
+-type span_function() :: fun(() -> {span_result(), event_metadata()}) | {span_result(), event_measurements(), event_metadata()}.
 -type handler() :: #{id := handler_id(),
                      event_name := event_name(),
                      function := handler_function(),
@@ -178,7 +178,7 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 
 %% @doc Runs the provided `SpanFunction', emitting start and stop/exception events, invoking the handlers attached to each.
 %%
-%% The `SpanFunction' must return a `{result, stop_metadata}' or a `{result, stop_metadata, extra_measurements}` tuple.
+%% The `SpanFunction' must return a `{result, stop_metadata}' or a `{result, extra_measurements, stop_metadata}` tuple.
 %%
 %% When this function is called, 2 events will be emitted via {@link execute/3}. Those events will be one of the following
 %% pairs:
@@ -203,7 +203,7 @@ execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) a
 %% should be available to both `start' and `stop' events need to supplied separately for `StartMetadata' and
 %% `StopMetadata'.
 %%
-%% If `SpanFunction` is returned as `{result, stop_metadata, extra_measurements}`, then a map of extra measurements
+%% If `SpanFunction` is returned as `{result, extra_measurements, stop_metadata}`, then a map of extra measurements
 %% will be merged with the measurements automatically provided. This is useful if you want to return, for example, 
 %% bytes from an HTTP request. The standard measurements `duration` and `monotonic_time` cannot be overridden.
 %%
@@ -332,7 +332,7 @@ span(EventPrefix, StartMetadata, SpanFunction) ->
               merge_ctx(StopMetadata, DefaultCtx)
           ),
           Result;
-      {Result, StopMetadata, ExtraMeasurements} ->
+      {Result, ExtraMeasurements, StopMetadata} ->
           StopTime = erlang:monotonic_time(),
           Measurements = maps:merge(ExtraMeasurements, #{duration => StopTime - StartTime, monotonic_time => StopTime}),
           execute(
