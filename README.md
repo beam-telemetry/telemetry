@@ -253,7 +253,7 @@ or `rebar.config`:
 
 ## Copyright and License
 
-Copyright (c) 2018 Chris McCord and Erlang Solutions.
+Copyright (c) 2019 Erlang Ecosystem Foundation and Erlang Solutions.
 
 Telemetry's source code is released under the Apache License, Version 2.0.
 
