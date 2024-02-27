@@ -1,0 +1,20 @@
+apps_dirs:
+  - "_build/default/lib/*"
+
+include_dirs:
+  - "include"
+  - "_build/default/lib/*/src"
+
+lenses:
+  enabled:
+    - ct-run-test
+    - show-behaviour-usages
+
+diagnostics:
+  enabled:
+    - crossref
+    - dialyzer
+
+exclude_unused_includes:
+  - "logger.hrl"
+  - "telemetry.hrl"
