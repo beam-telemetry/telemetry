@@ -56,11 +56,11 @@
 %%
 %% See {@link execute/3} to learn how the handlers are invoked.
 %%
-%% <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
-%% function captures (i.e. `fun mod:fun/4' in Erlang or `&Mod.fun/4' in Elixir) as event handlers
-%% to achieve maximum performance. In other words, avoid using literal anonymous functions
-%% (`fun(...) -> ... end' or `fn ... -> ... end') or local function captures (`fun handle_event/4'
-%% or `&handle_event/4' ) as event handlers.
+%% `function` must be a 4 arity function. Due to how anonymous functions are implemented 
+%% in the Erlang VM, it is best to use function captures (i.e. `fun mod:fun/4' in Erlang or 
+%% `&Mod.fun/4' in Elixir) as event handlers to achieve maximum performance. In other words,
+%% avoid using literal anonymous functions (`fun(...) -> ... end' or `fn ... -> ... end') or 
+%% local function captures (`fun handle_event/4' or `&handle_event/4' ) as event handlers.
 %%
 %% All the handlers are executed by the process dispatching event. If the function fails (raises,
 %% exits or throws) then the handler is removed and a failure event is emitted.
@@ -103,8 +103,9 @@ attach(HandlerId, EventName, Function, Config) ->
       EventName :: event_name(),
       Function :: handler_function(),
       Config :: handler_config().
-attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 4) ->
+attach_many(HandlerId, EventNames, Function, Config) ->
     assert_event_names(EventNames),
+    assert_function(Function),
     case erlang:fun_info(Function, type) of
         {type, external} ->
             ok;
@@ -383,6 +384,12 @@ assert_event_names(List) when is_list(List) ->
     [assert_event_name(E) || E <- List];
 assert_event_names(Term) ->
     erlang:error(badarg, Term).
+
+-spec assert_function(term()) -> ok.
+assert_function(Function) when is_function(Function, 4) ->
+    ok;
+assert_function(Function) ->
+    erlang:error(badarg, Function).
 
 -spec assert_event_prefix(term()) -> ok.
 assert_event_prefix(List) when is_list(List) ->

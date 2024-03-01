@@ -14,7 +14,7 @@ all() ->
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
      off_execute, invoke_successful_span_handlers, invoke_exception_span_handlers,
-     spans_generate_unique_default_contexts, logs_on_local_function].
+     spans_generate_unique_default_contexts, logs_on_local_function, badarg_on_wrong_arity_function].
 
 init_per_suite(Config) ->
     application:ensure_all_started(telemetry),
@@ -454,6 +454,13 @@ spans_generate_unique_default_contexts(Config) ->
     after
         1000 -> ct:fail(timeout_receive_echo)
     end.
+
+badarg_on_wrong_arity_function(Config) ->
+    HandlerId = ?config(id, Config),
+    Event = [a, first, event],
+    HandlerFun = fun ?MODULE:wrong_arity_function/3,
+
+    ?assertError(badarg, telemetry:attach(HandlerId, Event, HandlerFun, nil)).
 
 logs_on_local_function(Config) ->
     HandlerId = ?config(id, Config),
