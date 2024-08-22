@@ -1,6 +1,6 @@
 {application, telemetry,
  [{description, "Dynamic dispatching library for metrics and instrumentations"},
-  {vsn, "1.2.1"},
+  {vsn, "1.3.0"},
   {registered, []},
   {mod, {telemetry_app, []}},
   {applications,
@@ -11,7 +11,7 @@
   {modules, []},
 
   {licenses, ["Apache-2.0"]},
-  {links, [{"Github", "https://github.com/beam-telemetry/telemetry"}]},
+  {links, [{"GitHub", "https://github.com/beam-telemetry/telemetry"}]},
   {doc, "doc"},
   {include_files, ["mix.exs"]}
  ]}.
