@@ -52,7 +52,7 @@ and `execute/2`.
 ?DOC("""
 Attaches the handler to the event.
 
-`handler_id` must be unique, if another handler with the same ID already exists the
+`HandlerId` must be unique, if another handler with the same ID already exists the
 `{error, already_exists}` tuple is returned.
 
 See `execute/3` to learn how the handlers are invoked.
@@ -85,9 +85,9 @@ attach(HandlerId, EventName, Function, Config) ->
 ?DOC("""
 Attaches the handler to many events.
 
-The handler will be invoked whenever any of the events in the `event_names` list is emitted. Note
+The handler will be invoked whenever any of the events in the `EventNames` list is emitted. Note
 that failure of the handler on any of these invocations will detach it from all the events in
-`event_name` (the same applies to manual detaching using `detach/1`).
+`EventNames` (the same applies to manual detaching using `detach/1`).
 
 <b>Note:</b> due to how anonymous functions are implemented in the Erlang VM, it is best to use
 function captures (i.e. `fun mod:fun/4` in Erlang or `&Mod.fun/4` in Elixir) as event handlers
@@ -146,7 +146,7 @@ arguments:
 
 #### Best practices and conventions:
 
-While you are able to emit messages of any `event_name` structure, it is recommended that you follow the
+While you are able to emit messages of any `t:event_name/0` structure, it is recommended that you follow the
 the guidelines laid out in `span/3` if you are capturing start/stop events.
 """).
 -spec execute(EventName, Measurements, Metadata) -> ok when

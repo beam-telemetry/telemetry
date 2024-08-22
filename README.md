@@ -124,7 +124,7 @@ apply. If an exception does occur, an `EventPrefix ++ [exception]` event will be
 will be re-raised.
 
 The measurements for the `EventPrefix ++ [start]` event will contain a key called `system_time` which is
-derived by calling `erlang:system_time()`. For `EventPrefix ++ [stop]` and `EventPrefix ++ [exception]`
+derived by calling `erlang:system_time/0`. For `EventPrefix ++ [stop]` and `EventPrefix ++ [exception]`
 events, the measurements will contain a key called `duration` and its value is derived by calling
 `erlang:monotonic_time() - StartMonotonicTime`. All events include a `monotonic_time` measurement too.
 All of them represent time as native units.
