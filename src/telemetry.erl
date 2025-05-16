@@ -68,11 +68,31 @@ See `execute/3` to learn how the handlers are invoked.
 All the handlers are executed by the process dispatching event. If the function fails (raises,
 exits or throws) then the handler is removed and a failure event is emitted.
 
-Handler failure events `[telemetry, handler, failure]` should only be used for monitoring
-and diagnostic purposes. Re-attaching a failed handler will likely result in the handler
-failing again.
-
 Note that you should not rely on the order in which handlers are invoked.
+
+### Failing Handlers
+
+When a handler fails, it is removed and a **failure event** is emitted.
+This is useful for monitoring and diagnostic purposes.
+
+Handler failure events are executed as:
+
+  * Event name: `[telemetry, handler, failure]`
+  * Measurements:
+    * `monotonic_time` - The current monotonic time in native units from calling
+      `erlang:monotonic_time/0`
+    * `system_time` - The current system time in native units from calling
+      `erlang:system_time/0`
+  * Metadata:
+    * `event_name` - The event that failed (`t:event_name/0`)
+    * `handler_id` - The ID of the handler that failed
+    * `handler_config` - The configuration of the handler that failed
+    * `kind` - The kind of failure (`error`, `exit`, `throw`)
+    * `reason` - The reason for the failure
+    * `stacktrace` - The stacktrace for the failure
+
+These handler failure events should only be used for monitoring and diagnostic purposes.
+Re-attaching a failed handler will likely result in the handler failing again.
 """).
 -spec attach(HandlerId, EventName, Function, Config) -> ok | {error, already_exists} when
       HandlerId :: handler_id(),
@@ -98,9 +118,7 @@ or `&handle_event/4`) as event handlers.
 All the handlers are executed by the process dispatching event. If the function fails (raises,
 exits or throws) a handler failure event is emitted and then the handler is removed.
 
-Handler failure events `[telemetry, handler, failure]` should only be used for monitoring
-and diagnostic purposes. Re-attaching a failed handler will likely result in the handler
-failing again.
+Failing handlers emit a failure event, which is documented in `attach/4`.
 
 Note that you should not rely on the order in which handlers are invoked.
 """).
