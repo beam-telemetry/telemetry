@@ -10,43 +10,56 @@ on:
 
 jobs:
   build:
-    name: Test on OTP ${{ matrix.otp_version }} and ${{ matrix.os }}
+    name: OTP ${{ matrix.otp_version }} / rebar3 ${{ matrix.rebar3_version }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
-        otp_version: ["26.1.2", "25.2", "24.3.4.7"]
-        os: [ubuntu-22.04]
-        rebar3_version: ["3.22.1"]
         include:
-          - otp_version: "23.3.4.18"
-            os: ubuntu-20.04
-            rebar3_version: "3.20.0"
-          - otp_version: "22.3.4.26"
-            os: ubuntu-20.04
-            rebar3_version: "3.18.0"
-    env:
-      OTP_VERSION: ${{ matrix.otp_version }}
+          - otp_version: "24"
+            rebar3_version: "3.21.0"
+            os: ubuntu-latest
+          - otp_version: "25"
+            rebar3_version: "3.21.0"
+            os: ubuntu-latest
+          - otp_version: "26"
+            rebar3_version: "3.25.1"
+            os: ubuntu-latest
+          - otp_version: "27"
+            rebar3_version: "3.25.1"
+            os: ubuntu-latest
+          - otp_version: "28"
+            rebar3_version: "3.25.1"
+            os: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: ${{ matrix.otp_version }}
-          rebar3-version: ${{ matrix.rebar3_version }}
-          version-type: loose
-      - uses: actions/cache@v3
-        name: Cache
-        with:
-          path: |
-            _build
-          key: ${{ runner.os }}-build-${{ matrix.otp_version }}-${{ hashFiles(format('rebar.lock')) }}-1
-          restore-keys: |
-            ${{ runner.os }}-build-${{ matrix.otp_version }}-1-
-      - name: Compile
-        run: rebar3 compile
-      - name: Common Test tests
-        run: rebar3 ct --cover
-      - name: XRef
-        run: rebar3 xref
-      - name: Dialyzer
-        run: rebar3 dialyzer
+    - uses: actions/checkout@v5
+
+    - uses: erlef/setup-beam@v1
+      with:
+        otp-version: ${{ matrix.otp_version }}
+        rebar3-version: ${{ matrix.rebar3_version }}
+
+    - uses: actions/cache@v4
+      name: Cache
+      with:
+        path: |
+          _build
+        key: ${{ runner.os }}-build-${{ matrix.otp_version }}-${{ matrix.rebar3_version }}-${{ hashFiles(format('rebar.lock')) }}-1
+        restore-keys: |
+          ${{ runner.os }}-build-${{ matrix.otp_version }}-${{ matrix.rebar3_version }}-1-
+
+    - name: Report
+      run: rebar3 report "compile"
+
+    - name: Compile
+      run: rebar3 compile
+
+    - name: Common Test tests
+      run: rebar3 ct --cover
+
+    - name: XRef
+      run: rebar3 xref
+
+    - name: Dialyzer
+      run: rebar3 dialyzer
+      if: ${{ matrix.otp_version == 28 }}

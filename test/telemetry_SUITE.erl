@@ -385,7 +385,7 @@ invoke_exception_span_handlers(Config) ->
     ExceptionEvent = EventPrefix ++ [exception],
     HandlerConfig = #{send_to => self()},
     StartMetadata = #{some => start_metadata, telemetry_span_context => ctx},
-    SpanFunction = fun() -> 1 / 0 end,
+    SpanFunction = fun() -> erlang:error(badarith) end,
 
     telemetry:attach_many(HandlerId, [StartEvent, ExceptionEvent], fun ?MODULE:echo_event/4, HandlerConfig),
 
