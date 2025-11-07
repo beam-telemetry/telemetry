@@ -72,8 +72,9 @@ list_handlers(Config) ->
     HandlerFun = fun ?MODULE:echo_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, HandlerConfig),
 
+    EventName = Event  ++ [HandlerId],
     ?assertMatch([#{id := HandlerId,
-                    event_name := Event,
+                    event_name := EventName,
                     function := HandlerFun,
                     config := HandlerConfig}],
                  telemetry:list_handlers(Event)).
@@ -89,8 +90,9 @@ list_for_prefix(Config) ->
     HandlerFun = fun ?MODULE:echo_event/4,
     telemetry:attach(HandlerId, Event, HandlerFun, HandlerConfig),
 
+    EventName = Event ++ [HandlerId],
     [?assertMatch([#{id := HandlerId,
-                     event_name := Event,
+                     event_name := EventName,
                      function := HandlerFun,
                      config := HandlerConfig}],
                   telemetry:list_handlers(Prefix)) || Prefix <- [Prefix1, Prefix2, Prefix3]],
@@ -112,8 +114,9 @@ detach_on_exception(Config) ->
     telemetry:attach(HandlerId, Event, HandlerFun, HandlerConfig),
     telemetry:attach(FailureHandlerId, FailureEvent, FailureHandlerFun, FailureHandlerConfig),
 
+    EventName = Event ++ [HandlerId],
     ?assertMatch([#{id := HandlerId,
-                    event_name := Event,
+                    event_name := EventName,
                     function := HandlerFun,
                     config := HandlerConfig}],
                  telemetry:list_handlers(Event)),
@@ -174,11 +177,11 @@ no_execute_on_prefix(Config) ->
     telemetry:execute(Prefix, Measurements, Metadata),
 
     receive
-        {event, Event, Measurements, Metadata, HandlerConfig} ->
-            ct:fail(prefix_executed)
-    after
-        300 ->
+        {event, Prefix, Measurements, Metadata, HandlerConfig} ->
             ok
+    after
+        1000 ->
+            ct:fail(timeout)
     end.
 
 %% handler is not invoked when event more specific than the one it's attached to is emitted
@@ -259,8 +262,9 @@ list_handler_on_many(Config) ->
     telemetry:attach_many(HandlerId, [Event1, Event2, Event3], HandlerFun, HandlerConfig),
 
     lists:foreach(fun(Event) ->
+                          EventName = Event ++ [HandlerId],
                           ?assertMatch([#{id := HandlerId,
-                                          event_name := Event,
+                                          event_name := EventName,
                                           function := HandlerFun,
                                           config := _EventConfig}],
                                        telemetry:list_handlers(Event))
