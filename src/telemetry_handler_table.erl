@@ -42,12 +42,22 @@ insert(HandlerId, EventNames, Function, Config) ->
 delete(HandlerId) ->
     gen_server:call(?MODULE, {delete, HandlerId}).
 
+impl_get() -> persistent_term:get(telemetry).
+
 -spec list_for_event(telemetry:event_name()) -> [#handler{}].
 list_for_event(EventName) ->
-    try
-        ets:lookup(?MODULE, EventName)
-    catch
-        error:badarg ->
+    case impl_get() of
+        {ets, TID} ->
+            try
+                ets:lookup(TID, EventName)
+            catch
+                error:badarg ->
+                    persistent_term:erase(telemetry),
+                    ?LOG_WARNING("Failed to lookup telemetry handlers. "
+                                 "Ensure the telemetry application has been started. ", []),
+                    []
+            end;
+        _ ->
             ?LOG_WARNING("Failed to lookup telemetry handlers. "
                          "Ensure the telemetry application has been started. ", []),
             []
@@ -55,33 +65,49 @@ list_for_event(EventName) ->
 
 -spec list_by_prefix(telemetry:event_prefix()) -> [#handler{}].
 list_by_prefix(EventPrefix) ->
-    Pattern = match_pattern_for_prefix(EventPrefix),
-    ets:match_object(?MODULE, Pattern).
+    case impl_get() of
+        {ets, TID} ->
+            Pattern = match_pattern_for_prefix(EventPrefix),
+            ets:match_object(TID, Pattern);
+        _ ->
+            ?LOG_WARNING("Failed to lookup telemetry handlers. "
+                         "Ensure the telemetry application has been started. ", []),
+            []
+    end.
 
 init([]) ->
-    _ = create_table(),
+    TID = create_table(),
+
+    persistent_term:put(telemetry, {ets, TID}),
+
     {ok, []}.
 
 handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
-    case ets:match(?MODULE, #handler{id=HandlerId,
-                                     _='_'}) of
-        [] ->
-            Objects = [#handler{id=HandlerId,
-                                event_name=EventName,
-                                function=Function,
-                                config=Config} || EventName <- EventNames],
-            ets:insert(?MODULE, Objects),
-            {reply, ok, State};
-        _ ->
-            {reply, {error, already_exists}, State}
+    case impl_get() of
+        {ets, TID} ->
+            case ets:match(TID, #handler{id=HandlerId,
+                                         _='_'}) of
+                [] ->
+                    Objects = [#handler{id=HandlerId,
+                                        event_name=EventName,
+                                        function=Function,
+                                        config=Config} || EventName <- EventNames],
+                    ets:insert(TID, Objects),
+                    {reply, ok, State};
+                _ ->
+                    {reply, {error, already_exists}, State}
+            end
     end;
 handle_call({delete, HandlerId}, _From, State) ->
-    case ets:select_delete(?MODULE, [{#handler{id=HandlerId,
-                                              _='_'}, [], [true]}]) of
-        0 ->
-            {reply, {error, not_found}, State};
-        _ ->
-            {reply, ok, State}
+    case impl_get() of
+        {ets, TID} ->
+            case ets:select_delete(TID, [{#handler{id=HandlerId,
+                                                   _='_'}, [], [true]}]) of
+                0 ->
+                    {reply, {error, not_found}, State};
+                _ ->
+                    {reply, ok, State}
+            end
     end.
 
 handle_cast(_Msg, State) ->
@@ -94,6 +120,7 @@ code_change(_, State, _) ->
     {ok, State}.
 
 terminate(_Reason, _State) ->
+    persistent_term:erase(telemetry),
     ok.
 
 %%
