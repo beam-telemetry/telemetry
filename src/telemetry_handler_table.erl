@@ -100,7 +100,7 @@ terminate(_Reason, _State) ->
 
 create_table() ->
     ets:new(?MODULE, [duplicate_bag, protected, named_table,
-                      {keypos, 3}, {read_concurrency, true}]).
+                      {keypos, #handler.event_name}, {read_concurrency, true}]).
 
 match_pattern_for_prefix(EventPrefix) ->
     #handler{event_name=match_for_prefix(EventPrefix),
