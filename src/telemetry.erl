@@ -2,6 +2,7 @@
 
 -export([attach/4,
          attach_many/4,
+         persist/0,
          detach/1,
          list_handlers/1,
          execute/2,
@@ -141,6 +142,17 @@ attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 
                       #{report_cb => fun ?MODULE:report_cb/1})
     end,
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
+
+?DOC("""
+Persist telemetry handlers.
+
+This will improve performance of calling Telemetry handlers at the cost of
+reducing performance of attaching or detaching new handlers.
+
+This function should be used with care.
+""").
+persist() ->
+    telemetry_handler_table:persist().
 
 ?DOC("""
 Removes the existing handler.

@@ -7,29 +7,64 @@
 
 -include("telemetry.hrl").
 
-all() ->
-    [bad_event_names, duplicate_attach, invoke_handler,
+all() -> [persist_with_existing_handlers, {group, ets}, {group, persisted}].
+
+groups() ->
+    Tests = [bad_event_names, duplicate_attach, invoke_handler,
      list_handlers, list_for_prefix, detach_on_exception,
      no_execute_detached, no_execute_on_prefix, no_execute_on_specific,
      handler_on_multiple_events, remove_all_handler_on_failure,
      list_handler_on_many, detach_from_all, old_execute, default_metadata,
      off_execute, invoke_successful_span_handlers, invoke_exception_span_handlers,
-     spans_generate_unique_default_contexts, logs_on_local_function].
+     spans_generate_unique_default_contexts, logs_on_local_function],
 
-init_per_suite(Config) ->
+    [{ets, [], Tests}, {persisted, [], Tests}].
+
+init_per_group(Name, Config) ->
     application:ensure_all_started(telemetry),
+    case Name of
+        persisted -> ok = telemetry:persist();
+        _ -> ok
+    end,
     Config.
 
-end_per_suite(_Config) ->
+end_per_group(_, _Config) ->
     application:stop(telemetry).
 
 init_per_testcase(_, Config) ->
     HandlerId = crypto:strong_rand_bytes(16),
     [{id, HandlerId} | Config].
 
+end_per_testcase(persist_with_existing_handlers, _Config) ->
+    ok;
 end_per_testcase(_, Config) ->
     HandlerId = ?config(id, Config),
     telemetry:detach(HandlerId).
+
+persist_with_existing_handlers(Config) ->
+    application:ensure_all_started(telemetry),
+    HandlerId = ?config(id, Config),
+    Event = [a, test, event],
+    HandlerConfig = #{send_to => self()},
+    Measurements = #{data => 3},
+    Metadata = #{some => metadata},
+    telemetry:attach(HandlerId, Event, fun ?MODULE:echo_event/4, HandlerConfig),
+
+    telemetry:persist(),
+
+    telemetry:execute(Event, Measurements, Metadata),
+
+    try
+        receive
+            {event, Event, Measurements, Metadata, HandlerConfig} ->
+                ok
+        after
+            1000 ->
+                ct:fail(timeout_receive_echo)
+        end
+    after
+        application:stop(telemetry)
+    end.
 
 bad_event_names(Config) ->
     HandlerId = ?config(id, Config),
