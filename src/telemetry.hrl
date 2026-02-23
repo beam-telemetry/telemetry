@@ -24,7 +24,9 @@
 -if(?OTP_RELEASE >= 27).
 -define(MODULEDOC(Str), -moduledoc(Str)).
 -define(DOC(Str), -doc(Str)).
+-define(DOC_SINCE(Vsn), -doc(#{since => Vsn})).
 -else.
 -define(MODULEDOC(Str), -compile([])).
 -define(DOC(Str), -compile([])).
+-define(DOC_SINCE(Vsn), -compile([])).
 -endif.
