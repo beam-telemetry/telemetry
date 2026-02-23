@@ -189,29 +189,32 @@ execute(EventName, Value, Metadata) when is_number(Value) ->
     execute(EventName, #{value => Value}, Metadata);
 execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) and is_map(Metadata) ->
     Handlers = telemetry_handler_table:list_for_event(EventName),
-    ApplyFun =
-        fun(#handler{id=HandlerId,
-                     function=HandlerFunction,
-                     config=Config}) ->
-            try
-                HandlerFunction(EventName, Measurements, Metadata, Config)
-            catch
-                ?WITH_STACKTRACE(Class, Reason, Stacktrace)
-                    detach(HandlerId),
-                    FailureMetadata = #{event_name => EventName,
-                                        handler_id => HandlerId,
-                                        handler_config => Config,
-                                        kind => Class,
-                                        reason => Reason,
-                                        stacktrace => Stacktrace},
-                    FailureMeasurements = #{monotonic_time => erlang:monotonic_time(), system_time => erlang:system_time()},
-                    execute([telemetry, handler, failure], FailureMeasurements, FailureMetadata),
-                    ?LOG_ERROR("Handler ~p has failed and has been detached. "
-                               "Class=~p~nReason=~p~nStacktrace=~p~n",
-                               [HandlerId, Class, Reason, Stacktrace])
-            end
-        end,
-    lists:foreach(ApplyFun, Handlers).
+    do_execute(Handlers, EventName, Measurements, Metadata).
+
+do_execute([], _EventName, _Measurements, _Metadata) -> ok;
+do_execute([Handler | Rest], EventName, Measurements, Metadata) ->
+    #handler{id=HandlerId,
+             function=HandlerFunction,
+             config=Config} = Handler,
+    try
+        HandlerFunction(EventName, Measurements, Metadata, Config)
+    catch
+        ?WITH_STACKTRACE(Class, Reason, Stacktrace)
+        detach(HandlerId),
+        FailureMetadata = #{event_name => EventName,
+                            handler_id => HandlerId,
+                            handler_config => Config,
+                            kind => Class,
+                            reason => Reason,
+                            stacktrace => Stacktrace},
+        FailureMeasurements = #{monotonic_time => erlang:monotonic_time(), system_time => erlang:system_time()},
+        execute([telemetry, handler, failure], FailureMeasurements, FailureMetadata),
+        ?LOG_ERROR("Handler ~p has failed and has been detached. "
+                   "Class=~p~nReason=~p~nStacktrace=~p~n",
+                   [HandlerId, Class, Reason, Stacktrace])
+    end,
+    do_execute(Rest, EventName, Measurements, Metadata).
+
 
 ?DOC("""
 Runs the provided `SpanFunction`, emitting start and stop/exception events, invoking the handlers attached to each.
