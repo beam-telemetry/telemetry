@@ -151,6 +151,8 @@ reducing performance of attaching or detaching new handlers.
 
 This function should be used with care.
 """).
+?DOC_SINCE("1.4.0").
+-spec persist() -> ok.
 persist() ->
     telemetry_handler_table:persist().
 
