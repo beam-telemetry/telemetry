@@ -29,14 +29,15 @@ starts_with(_Haystack, _Needle) -> false.
 insert(Map, _HandlerId, [], _Function, _Config) ->
     {ok, Map};
 insert(Map, HandlerId, [EventName | Rest], Function, Config) ->
-    Handler = #handler{id=HandlerId,
-                       event_name=EventName,
-                       function=Function,
-                       config=Config},
     OldHandlers = maps:get(EventName, Map, []),
     case OldHandlers of
-        #{HandlerId := _} -> {error, already_exists};
+        #{HandlerId := _} ->
+            {error, already_exists};
         _ ->
+            Handler = #handler{id=HandlerId,
+                               event_name=EventName,
+                               function=Function,
+                               config=Config},
             case put_new(Handler, OldHandlers) of
                 {ok, NewHandlers} ->
                     NewMap = Map#{EventName => NewHandlers},
