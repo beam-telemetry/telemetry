@@ -46,60 +46,49 @@ delete(HandlerId) ->
     gen_server:call(?MODULE, {delete, HandlerId}).
 
 persist() ->
-    {Mod, State} = impl_get(),
+    {Mod, _, State} = impl_get(),
     case Mod:persist(State) of
         {ok, NewState} ->
-            persistent_term:put(telemetry, {telemetry_pt, NewState}),
-            ok;
+            ListForEventFun = fun telemetry_pt:list_for_event/2,
+            persistent_term:put(telemetry, {telemetry_pt, ListForEventFun, NewState});
         _ ->
             ok
     end.
 
-impl_get() -> persistent_term:get(telemetry, undefined).
+impl_get() ->
+    persistent_term:get(telemetry, default_impl()).
 
 -spec list_for_event(telemetry:event_name()) -> [#handler{}].
 list_for_event(EventName) ->
-    case impl_get() of
-        {Mod, State} ->
-            Mod:list_for_event(State, EventName);
-        undefined ->
-            ?LOG_WARNING("Failed to lookup telemetry handlers. "
-                         "Ensure the telemetry application has been started. ", []),
-            []
-    end.
+    {_Mod, ListForEventFun, State} = impl_get(),
+    ListForEventFun(State, EventName).
 
 -spec list_by_prefix(telemetry:event_prefix()) -> [#handler{}].
 list_by_prefix(EventPrefix) ->
-    case impl_get() of
-        {Mod, State} ->
-            Mod:list_by_prefix(State, EventPrefix);
-        undefined ->
-            ?LOG_WARNING("Failed to lookup telemetry handlers. "
-                         "Ensure the telemetry application has been started. ", []),
-            []
-    end.
+    {Mod, _ListForEventFun, State} = impl_get(),
+    Mod:list_by_prefix(State, EventPrefix).
 
 init([]) ->
+    process_flag(trap_exit, true),
     TID = create_table(),
-
-    persistent_term:put(telemetry, {telemetry_ets, TID}),
-
+    ListForEventFun = fun telemetry_ets:list_for_event/2,
+    persistent_term:put(telemetry, {telemetry_ets, ListForEventFun, TID}),
     {ok, []}.
 
 handle_call({insert, HandlerId, EventNames, Function, Config}, _From, State) ->
-    {Mod, MState} = impl_get(),
+    {Mod, ListForEventFun, MState} = impl_get(),
     case Mod:insert(MState, HandlerId, EventNames, Function, Config) of
         {ok, NewState} ->
-            persistent_term:put(telemetry, {Mod, NewState}),
+            persistent_term:put(telemetry, {Mod, ListForEventFun, NewState}),
             {reply, ok, State};
         {error, _} = Error ->
             {reply, Error, State}
     end;
 handle_call({delete, HandlerId}, _From, State) ->
-    {Mod, MState} = impl_get(),
+    {Mod, ListForEventFun, MState} = impl_get(),
     case Mod:delete(MState, HandlerId) of
         {ok, NewState} ->
-            persistent_term:put(telemetry, {Mod, NewState}),
+            persistent_term:put(telemetry, {Mod, ListForEventFun, NewState}),
             {reply, ok, State};
         {error, _} = Error ->
             {reply, Error, State}
@@ -119,6 +108,10 @@ terminate(_Reason, _State) ->
     ok.
 
 %%
+
+default_impl() ->
+    ListForEventFun = fun(_, _) -> [] end,
+    {telemetry_ets, ListForEventFun, #{}}.
 
 create_table() ->
     ets:new(?MODULE, [duplicate_bag, protected,
