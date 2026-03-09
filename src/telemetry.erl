@@ -139,7 +139,7 @@ attach_many(HandlerId, EventNames, Function, Config) when is_function(Function, 
                         function => Function,
                         config => Config,
                         type => local},
-                      #{report_cb => fun ?MODULE:report_cb/1})
+                      #{domain => [telemetry], report_cb => fun ?MODULE:report_cb/1})
     end,
     telemetry_handler_table:insert(HandlerId, EventNames, Function, Config).
 
@@ -186,8 +186,8 @@ the guidelines laid out in `span/3` if you are capturing start/stop events.
       Measurements :: event_measurements() | event_value(),
       Metadata :: event_metadata().
 execute(EventName, Value, Metadata) when is_number(Value) ->
-    ?LOG_WARNING("Using execute/3 with a single event value is deprecated. "
-                 "Use a measurement map instead.", []),
+    ?LOG_WARNING(#{event_name => EventName},
+       #{domain => [telemetry], report_cb => fun ?MODULE:report_cb/1}),
     execute(EventName, #{value => Value}, Metadata);
 execute([_ | _] = EventName, Measurements, Metadata) when is_map(Measurements) and is_map(Metadata) ->
     Handlers = telemetry_handler_table:list_for_event(EventName),
@@ -211,9 +211,9 @@ do_execute([Handler | Rest], EventName, Measurements, Metadata) ->
                             stacktrace => Stacktrace},
         FailureMeasurements = #{monotonic_time => erlang:monotonic_time(), system_time => erlang:system_time()},
         execute([telemetry, handler, failure], FailureMeasurements, FailureMetadata),
-        ?LOG_ERROR("Handler ~p has failed and has been detached. "
-                   "Class=~p~nReason=~p~nStacktrace=~p~n",
-                   [HandlerId, Class, Reason, Stacktrace])
+        ?LOG_ERROR(
+           #{handler_id => HandlerId, kind => Class, reason => Reason, stacktrace => Stacktrace},
+           #{domain => [telemetry], report_cb => fun ?MODULE:report_cb/1})
     end,
     do_execute(Rest, EventName, Measurements, Metadata).
 
@@ -448,10 +448,17 @@ merge_ctx(#{telemetry_span_context := _} = Metadata, _Ctx) -> Metadata;
 merge_ctx(Metadata, Ctx) -> Metadata#{telemetry_span_context => Ctx}.
 
 ?DOC(false).
+report_cb(#{handler_id := HandlerId, kind := Class, reason := Reason, stacktrace := Stacktrace}) ->
+    {"Handler ~p has failed and has been detached. "
+    "Class=~p~nReason=~p~nStacktrace=~p~n",
+    [HandlerId, Class, Reason, Stacktrace]};
 report_cb(#{handler_id := Id}) ->
     {"The function passed as a handler with ID ~w is a local function.\n"
      "This means that it is either an anonymous function or a capture of a function "
      "without a module specified. That may cause a performance penalty when calling "
      "that handler. For more details see the note in `telemetry:attach/4` "
      "documentation.\n\n"
-     "https://hexdocs.pm/telemetry/telemetry.html#attach/4", [Id]}.
+     "https://hexdocs.pm/telemetry/telemetry.html#attach/4", [Id]};
+report_cb(#{event_name := _}) ->
+    "Using execute/3 with a single event value is deprecated. "
+    "Use a measurement map instead.".
