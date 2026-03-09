@@ -55,14 +55,14 @@ persist() ->
             ok
     end.
 
-impl_get() -> persistent_term:get(telemetry).
+impl_get() -> persistent_term:get(telemetry, undefined).
 
 -spec list_for_event(telemetry:event_name()) -> [#handler{}].
 list_for_event(EventName) ->
     case impl_get() of
         {Mod, State} ->
             Mod:list_for_event(State, EventName);
-        _ ->
+        undefined ->
             ?LOG_WARNING("Failed to lookup telemetry handlers. "
                          "Ensure the telemetry application has been started. ", []),
             []
@@ -73,7 +73,7 @@ list_by_prefix(EventPrefix) ->
     case impl_get() of
         {Mod, State} ->
             Mod:list_by_prefix(State, EventPrefix);
-        _ ->
+        undefined ->
             ?LOG_WARNING("Failed to lookup telemetry handlers. "
                          "Ensure the telemetry application has been started. ", []),
             []
