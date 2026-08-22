@@ -5,6 +5,8 @@
          persist/0,
          detach/1,
          list_handlers/1,
+         execute_lazy/2,
+         execute_lazy/3,
          execute/2,
          execute/3,
          span/3]).
@@ -164,6 +166,22 @@ If the handler with given ID doesn't exist, `{error, not_found}` is returned.
 -spec detach(handler_id()) -> ok | {error, not_found}.
 detach(HandlerId) ->
     telemetry_handler_table:delete(HandlerId).
+
+execute_lazy(EventName, Func) -> execute_lazy(EventName, ignored, Func).
+
+execute_lazy([_ | _] = EventName, Fallback, Func) when is_function(Func, 0) ->
+    case telemetry_handler_table:list_for_event(EventName) of
+        [] -> Fallback;
+        Handlers ->
+            {Return, Data} = Func(),
+            case Data of
+                ignore ->
+                    [];
+                {Measurements, Metadata} ->
+                    do_execute(Handlers, EventName, Measurements, Metadata)
+            end,
+            Return
+    end.
 
 ?DOC("""
 Emits the event, invoking handlers attached to it.
