@@ -60,6 +60,15 @@ jobs:
     - name: XRef
       run: rebar3 xref
 
+    - name: Documentation
+      run: |
+        rebar3 hex build docs
+        test -s doc/index.html
+        test -s doc/telemetry.md
+        test -s doc/llms.txt
+        test -s doc/telemetry.epub
+      if: ${{ matrix.otp_version == 28 }}
+
     - name: Dialyzer
       run: rebar3 dialyzer
       if: ${{ matrix.otp_version == 28 }}
