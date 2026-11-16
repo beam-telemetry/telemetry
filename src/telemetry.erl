@@ -478,5 +478,5 @@ report_cb(#{handler_id := Id}) ->
      "documentation.\n\n"
      "https://hexdocs.pm/telemetry/telemetry.html#attach/4", [Id]};
 report_cb(#{event_name := _}) ->
-    "Using execute/3 with a single event value is deprecated. "
-    "Use a measurement map instead.".
+    {"Using execute/3 with a single event value is deprecated. "
+     "Use a measurement map instead.", []}.
